@@ -8,4 +8,17 @@ interface DateObject {
   day: string;
 }
 
-interface Window {}
+interface Window {
+  $sentry: AnyObject;
+}
+
+interface ReportOptions {
+  dsn: string;
+  release: string;
+  environment: string;
+}
+
+interface UserInfo {
+  username: string;
+  userid?: string;
+}
