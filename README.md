@@ -1,28 +1,22 @@
 # mobile-web-best-practice
 
-下面是本项目中使用的技术
+移动端 web 最佳实践，基于 vue-cli3 搭建，以下大部分内容同样适用于 react 等前端框架。
 
-### 前端框架
-
-[vue](https://github.com/vuejs/vue)
-
-[vue-router](https://github.com/vuejs/vue-router)
-
-[vuex](https://github.com/vuejs/vuex)
-
-本项目使用的是 vue 全家桶，但下面绝大部分内容同样适用其他框架，比如 react 等。
-
-### 组件库
+## 组件库
 
 [vant](https://youzan.github.io/vant/#/zh-CN/intro)
 
 vue 移动端组件库目前主要有 vux, mint ui, vant, cube-ui 等，本项目使用的是有赞前端团队开源的 vant。
 
+vant 官方目前已经支持自定义样式主题，本项目也采用了该方式，请查看相关文档：
+
+[定制主题](https://youzan.github.io/vant/#/zh-CN/theme)
+
 下面推荐一篇介绍各个组件库特点的文章：
 
 [Vue 常用组件库的比较分析（移动端）](https://blog.csdn.net/weixin_38633659/article/details/89736656)
 
-### JSBridge
+## JSBridge
 
 [DSBridge-IOS](https://github.com/wendux/DSBridge-IOS)
 
@@ -48,19 +42,19 @@ js 调用 native 方法：
 
 - 注入 JS 上下文
 
-### 样式
+## 样式
 
 todo
 
-### 表单
+## 表单
 
 todo
 
-### 领域驱动设计
+## 领域驱动设计应用
 
 todo
 
-### 调试控制台
+## 调试控制台
 
 [eruda](https://github.com/liriliri/eruda)
 
@@ -80,7 +74,7 @@ todo
 </script>
 ```
 
-#### 抓包工具
+### 抓包工具
 
 [charles](https://www.charlesproxy.com/)
 
@@ -94,7 +88,7 @@ todo
 
 [解锁 Charles 的姿势](https://juejin.im/post/5a1033d2f265da431f4aa81f)
 
-### 异常监控平台
+## 异常监控平台
 
 [sentry](https://github.com/getsentry/sentry)
 
@@ -132,12 +126,12 @@ todo
 
 - js 报错
 
-### 性能监控平台
+## 性能监控平台
 
 todo
 
-### 常见问题
+## 常见问题
 
-#### iOS wkwebview cookie 写入慢以及易丢失问题
+### iOS wkwebview cookie 写入慢以及易丢失问题
 
 todo
