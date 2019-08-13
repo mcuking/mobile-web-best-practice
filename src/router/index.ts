@@ -5,7 +5,5 @@ import RouterList from './router-list';
 Vue.use(Router);
 
 export default new Router({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes: RouterList,
+  routes: RouterList
 });
