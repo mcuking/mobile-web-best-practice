@@ -66,7 +66,7 @@ export default class Home extends Vue {
 </script>
 
 <style lang="less">
-@import "./less/base.less";
+@import './less/base.less';
 
 #app {
   position: fixed;

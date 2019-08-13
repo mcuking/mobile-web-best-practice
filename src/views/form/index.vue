@@ -54,10 +54,7 @@ export default class Home extends Vue {
 
   private goToSelectDate() {
     this.$router.push({
-      name: 'date-picker',
-      query: {
-        from: 'add-staff-group'
-      }
+      name: 'date-picker'
     });
   }
 
