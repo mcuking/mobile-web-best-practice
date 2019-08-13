@@ -61,7 +61,9 @@ export default class Home extends Vue {
     });
   }
 
-  private handleSubmit() {}
+  private handleSubmit() {
+    return;
+  }
 
   private created() {
     this.$bus.on('select-date', (res: any) => {
