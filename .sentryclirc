@@ -1,7 +1,7 @@
+[defaults]
+url=https://sentry.io
+org=mcukingdom
+project=mobile-web-best-practice
+
 [auth]
 token=39f18ba3af32455283e0b42385cf06feb2d54d99fd6c481b8f8bfe16ed36d24f
-
-[defaults]
-project=mobile-web-best-practice
-org=mcukingdom
-url=https://sentry.io
