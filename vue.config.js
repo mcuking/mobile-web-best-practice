@@ -7,14 +7,15 @@ const VERSION = require('./package.json').version;
 const plugins = [];
 
 if (!IS_DEV) {
-  plugins.push(
-    new SentryPlugin({
-      release: VERSION,
-      include: './dist/static/js',
-      urlPrefix: '~/static/js/',
-      ignore: ['node_modules']
-    })
-  );
+  // 由于国内访问 sentry 官网网络不稳定，所以关闭自动上传 map 文件插件
+  // plugins.push(
+  //   new SentryPlugin({
+  //     release: VERSION,
+  //     include: './dist/js',
+  //     urlPrefix: '~/js/',
+  //     ignore: ['node_modules']
+  //   })
+  // );
 }
 
 module.exports = {
@@ -26,8 +27,8 @@ module.exports = {
     loaderOptions: {
       less: {
         modifyVars: {
-          // "button-primary-background-color": "#1989fa",
-          // "button-primary-border-color": "#1989fa"
+          'button-primary-background-color': '#1989fa',
+          'button-primary-border-color': '#1989fa'
         }
       }
     }
