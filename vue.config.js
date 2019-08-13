@@ -21,6 +21,7 @@ if (!IS_DEV) {
 module.exports = {
   outputDir: 'dist/',
   assetsDir: 'static',
+  publicPath: './',
   productionSourceMap: !IS_DEV,
   css: {
     extract: false,
