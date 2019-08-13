@@ -1,33 +1,27 @@
 <template>
   <div class="page">
-    <van-nav-bar
-      title="编辑个人信息"
-      left-text="返回"
-      left-arrow
-      @click-left="onClickLeft"
-    />
+    <van-nav-bar title="编辑个人信息"
+                 left-text="返回"
+                 left-arrow
+                 @click-left="onClickLeft" />
     <van-cell-group>
-      <van-field
-        v-model="formData.name"
-        clearable
-        label="用户名"
-        placeholder="请输入用户名"
-      />
-      <van-field
-        v-model="formData.password"
-        type="password"
-        label="密码"
-        placeholder="请输入密码"
-      />
-      <van-cell
-        title="出生日期"
-        is-link
-        :value="textData.birthDateStr"
-        @click="goToSelectDate"
-      />
+      <van-field v-model="formData.name"
+                 clearable
+                 label="用户名"
+                 placeholder="请输入用户名" />
+      <van-field v-model="formData.password"
+                 type="password"
+                 label="密码"
+                 placeholder="请输入密码" />
+      <van-cell title="出生日期"
+                is-link
+                :value="textData.birthDateStr"
+                @click="goToSelectDate" />
     </van-cell-group>
     <div class="form__button--submit">
-      <van-button type="primary" size="large" @click="handleSubmit">
+      <van-button type="primary"
+                  size="large"
+                  @click="handleSubmit">
         提交
       </van-button>
     </div>
@@ -67,9 +61,7 @@ export default class Home extends Vue {
     });
   }
 
-  private handleSubmit() {
-    console.log(this.formData, 'formData');
-  }
+  private handleSubmit() {}
 
   private created() {
     this.$bus.on('select-date', (res: any) => {
