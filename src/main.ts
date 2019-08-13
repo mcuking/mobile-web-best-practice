@@ -2,7 +2,9 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import store from './store';
+import VuePageStack from 'vue-page-stack';
 import Report from './utils/report';
+import GlobalMethods from './utils/global-method';
 
 const VERSION = require('../package.json').version;
 const DSN = 'https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795';
@@ -29,6 +31,9 @@ if (!IS_DEV) {
 }
 
 Vue.config.productionTip = false;
+
+Vue.use(GlobalMethods);
+Vue.use(VuePageStack, { router });
 
 new Vue({
   router,
