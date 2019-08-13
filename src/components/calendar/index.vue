@@ -1,9 +1,5 @@
 <template>
   <div class="date-select">
-    <van-nav-bar :title="title"
-                 left-text="返回"
-                 left-arrow
-                 @click-left="onClickLeft" />
     <div class="dpb-week">
       <div class="indicator clearfix"
            v-if="isRange">
@@ -79,7 +75,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue } from 'vue-property-decorator';
 
 interface Day {
   year: string;
@@ -90,10 +86,7 @@ interface Day {
 @Component({
   components: {}
 })
-export default class DatePicker extends Vue {
-  @Prop({ type: String, default: "选择日期" })
-  private title!: string;
-
+export default class Calendar extends Vue {
   @Prop({ type: Number, default: 2 })
   private monthLength!: number;
 
@@ -105,18 +98,18 @@ export default class DatePicker extends Vue {
   private isReverseAllow!: boolean;
 
   // 选择日期还是日期范围模式
-  @Prop({ type: Boolean, default: true })
+  @Prop({ type: Boolean, default: false })
   private isRange!: boolean;
 
   @Prop({
     type: Object,
-    default: () => ({ year: "", month: "", day: "" })
+    default: () => ({ year: '', month: '', day: '' })
   })
   private beginInit!: Day;
 
   @Prop({
     type: Object,
-    default: () => ({ year: "", month: "", day: "" })
+    default: () => ({ year: '', month: '', day: '' })
   })
   private endInit!: Day;
 
@@ -124,29 +117,29 @@ export default class DatePicker extends Vue {
   private year = new Date().getFullYear();
   private month = new Date().getMonth() + 1;
   private begin = {
-    year: "",
-    month: "",
-    day: ""
+    year: '',
+    month: '',
+    day: ''
   };
   private end = {
-    year: "",
-    month: "",
-    day: ""
+    year: '',
+    month: '',
+    day: ''
   };
   private start = {
-    year: "",
-    month: "",
-    day: ""
+    year: '',
+    month: '',
+    day: ''
   };
   private last = {
-    year: "",
-    month: "",
-    day: ""
+    year: '',
+    month: '',
+    day: ''
   };
   private length = 0;
 
   private onClickLeft() {
-    this.$emit("back");
+    this.$router.go(-1);
   }
 
   // 是否为不可选择日期
@@ -155,12 +148,12 @@ export default class DatePicker extends Vue {
     const last = this.last;
 
     const s1 = new Date(
-      start.year + "-" + start.month + "-" + start.day
+      start.year + '-' + start.month + '-' + start.day
     ).getTime();
     const s2 = new Date(
-      last.year + "-" + last.month + "-" + last.day
+      last.year + '-' + last.month + '-' + last.day
     ).getTime();
-    const s = new Date(day.year + "-" + day.month + "-" + day.day).getTime();
+    const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
 
     return s1 > s || s2 < s;
   }
@@ -170,17 +163,17 @@ export default class DatePicker extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + "-" + begin.month + "-" + begin.day
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
-    const s2 = new Date(end.year + "-" + end.month + "-" + end.day).getTime();
-    const s = new Date(day.year + "-" + day.month + "-" + day.day).getTime();
+    const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
+    const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
     return s === s1 || s === s2;
   }
 
   // 是否是今天
   private isToday(day: any) {
     const s = new Date(new Date().toLocaleDateString()).getTime();
-    const s1 = new Date(day.month + "/" + day.day + "/" + day.year).getTime();
+    const s1 = new Date(day.month + '/' + day.day + '/' + day.year).getTime();
     return s === s1;
   }
 
@@ -189,9 +182,9 @@ export default class DatePicker extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + "-" + begin.month + "-" + begin.day
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
-    const s = new Date(day.year + "-" + day.month + "-" + day.day).getTime();
+    const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
     return s === s1;
   }
 
@@ -199,8 +192,8 @@ export default class DatePicker extends Vue {
   private isEnd(day: any) {
     const begin = this.begin;
     const end = this.end;
-    const s1 = new Date(end.year + "-" + end.month + "-" + end.day).getTime();
-    const s = new Date(day.year + "-" + day.month + "-" + day.day).getTime();
+    const s1 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
+    const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
     return s === s1;
   }
 
@@ -212,23 +205,23 @@ export default class DatePicker extends Vue {
     }
     if (!this.isRange) {
       this.end = day;
-      this.$emit("select", this.end);
+      this.$emit('select', this.end);
       return;
     }
     if (!this.begin.year || (this.begin.year && this.end.year)) {
       this.begin = day;
       this.end = {
-        year: "",
-        month: "",
-        day: ""
+        year: '',
+        month: '',
+        day: ''
       };
     } else if (this.begin.year && !this.end.year) {
       // 若不支持反向选择，则选中日期
       if (
         !this.isReverseAllow &&
         this.getDaysSize(
-          this.begin.year + "-" + this.begin.month + "-" + this.begin.day,
-          day.year + "-" + day.month + "-" + day.day
+          this.begin.year + '-' + this.begin.month + '-' + this.begin.day,
+          day.year + '-' + day.month + '-' + day.day
         ) <= 0
       ) {
         this.end = day;
@@ -242,13 +235,13 @@ export default class DatePicker extends Vue {
         this.end = day;
       }
       // 选中日期
-      this.$emit("select", this.begin, this.end);
+      this.$emit('select', this.begin, this.end);
 
       const s1 = new Date(
-        this.begin.year + "-" + this.begin.month + "-" + this.begin.day
+        this.begin.year + '-' + this.begin.month + '-' + this.begin.day
       ).getTime();
       const s2 = new Date(
-        this.end.year + "-" + this.end.month + "-" + this.end.day
+        this.end.year + '-' + this.end.month + '-' + this.end.day
       ).getTime();
       this.length =
         parseInt(JSON.stringify((s2 - s1) / (1000 * 60 * 60 * 24)), 10) + 1;
@@ -258,9 +251,9 @@ export default class DatePicker extends Vue {
   // 判断是否反转日期
   private isOpposite(end: any, begin: any) {
     const s1 = new Date(
-      begin.year + "-" + begin.month + "-" + begin.day
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
-    const s2 = new Date(end.year + "-" + end.month + "-" + end.day).getTime();
+    const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
     return s2 < s1;
   }
 
@@ -272,10 +265,10 @@ export default class DatePicker extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + "-" + begin.month + "-" + begin.day
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
-    const s2 = new Date(end.year + "-" + end.month + "-" + end.day).getTime();
-    const s = new Date(day.year + "-" + day.month + "-" + day.day).getTime();
+    const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
+    const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
     if (s < s2 && s > s1) {
       return true;
     }
@@ -305,7 +298,7 @@ export default class DatePicker extends Vue {
     const d = new Date(year, month, 0);
     const lastDay = d.getDate();
     // 计算当前月份第一天是星期几
-    const weekday = this.getWeekday(year + "-" + month + "-01");
+    const weekday = this.getWeekday(year + '-' + month + '-01');
     // 定义存放当前月份的数组
     const data = [];
     // 定义日期表格数组
@@ -313,14 +306,14 @@ export default class DatePicker extends Vue {
     // 计算出当前月份每一天到数组中
     for (let day = 1; day <= lastDay; day++) {
       data.push({
-        day: day < 10 ? "0" + day : JSON.stringify(day),
+        day: day < 10 ? '0' + day : JSON.stringify(day),
         month,
         year
       });
     }
     // 补全日期前几天
     for (let i = 0; i < weekday; i++) {
-      data.unshift("");
+      data.unshift('');
     }
     // 切成6行
     for (let i = 0, len = data.length; i < len; i += 7) {
@@ -330,7 +323,7 @@ export default class DatePicker extends Vue {
     const length = result[result.length - 1].length;
     if (length < 7) {
       for (let i = 0; i < 7 - length; i++) {
-        result[result.length - 1].push("");
+        result[result.length - 1].push('');
       }
     }
 
@@ -348,7 +341,7 @@ export default class DatePicker extends Vue {
       const m = month + i > 12 ? month + i - 12 : month + i;
       const re = this.monthDate(
         JSON.stringify(y),
-        m < 10 ? "0" + m : JSON.stringify(m)
+        m < 10 ? '0' + m : JSON.stringify(m)
       );
       data.push(re);
     }
@@ -361,11 +354,11 @@ export default class DatePicker extends Vue {
       year: JSON.stringify(date.getFullYear()),
       month:
         date.getMonth() + 1 < 10
-          ? "0" + JSON.stringify(date.getMonth() + 1)
+          ? '0' + JSON.stringify(date.getMonth() + 1)
           : JSON.stringify(date.getMonth() + 1),
       day:
         date.getDate() < 10
-          ? "0" + JSON.stringify(date.getDate())
+          ? '0' + JSON.stringify(date.getDate())
           : JSON.stringify(date.getDate())
     };
 
@@ -374,11 +367,11 @@ export default class DatePicker extends Vue {
       year: JSON.stringify(date.getFullYear()),
       month:
         date.getMonth() + 1 < 10
-          ? "0" + JSON.stringify(date.getMonth() + 1)
+          ? '0' + JSON.stringify(date.getMonth() + 1)
           : JSON.stringify(date.getMonth() + 1),
       day:
         date.getDate() < 10
-          ? "0" + JSON.stringify(date.getDate())
+          ? '0' + JSON.stringify(date.getDate())
           : JSON.stringify(date.getDate())
     };
 
