@@ -1,11 +1,9 @@
 <template>
   <div class="page">
-    <van-nav-bar
-      title="选择日期"
-      left-text="返回"
-      left-arrow
-      @click-left="onClickLeft"
-    />
+    <van-nav-bar title="选择日期"
+                 left-text="返回"
+                 left-arrow
+                 @click-left="onClickLeft" />
     <Calendar @select="handleSelect"></Calendar>
   </div>
 </template>
