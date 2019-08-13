@@ -22,3 +22,5 @@ interface UserInfo {
   username: string;
   userid?: string;
 }
+
+declare module 'vue-page-stack';
