@@ -1,0 +1,36 @@
+/* 页面布局样式 */
+.layout__page {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 顶部导航 */
+.layout__header {
+  flex: 0 0 auto;
+  padding-top: 20px;
+  background: #fff;
+  z-index: 1000;
+  position: relative;
+  @media only screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) {
+    & {
+      padding-top: 44px;
+    }
+  }
+  @media only screen and (device-width: 414px) and (device-height: 896px) {
+    & {
+      padding-top: 44px;
+    }
+  }
+}
+/* 页面主体（除底部导航） */
+.layout__body {
+  flex: 0 1 100%;
+  font-size: 14px;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
