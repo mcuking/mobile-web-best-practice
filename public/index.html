@@ -15,7 +15,10 @@
       >
     </noscript>
     <div id="app"></div>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js"></script>
+    <script
+      type="text/javascript"
+      src="<%= BASE_URL %>https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue<%= process.env.NODE_ENV === 'development' ? '' : '.min' %>.js"
+    ></script>
     <script>
       (function() {
         const NO_ERUDA = window.location.protocol === 'https:';
