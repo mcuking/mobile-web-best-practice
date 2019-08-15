@@ -34,6 +34,7 @@ export default class Home extends Vue {
 
   // 监听resize事件（键盘弹起触发），然后将 input textarea 元素滑动到可视区域，并将特定元素隐藏
   private handleResize() {
+    const clientHeight = document.documentElement.clientHeight;
     window.addEventListener('resize', () => {
       // 判断当前 active 的元素是否为 input 或 textarea
       if (
@@ -43,17 +44,16 @@ export default class Home extends Vue {
         setTimeout(() => {
           // 原生方法，滚动至需要显示的位置
           document.activeElement!.scrollIntoView();
-
-          // 获取特定元素，将其设置为 display: none
-          const eles = document.getElementsByClassName('fixed-bottom');
-          for (const ele of eles) {
-            if ((ele as HTMLElement).style.display !== 'none') {
-              ele.setAttribute('style', 'display: none;');
-            } else {
-              ele.setAttribute('style', 'display: flex;');
-            }
-          }
         }, 0);
+      }
+
+      // 解决键盘弹起后 fixed 定位元素被顶起问题
+      const bodyHeight = document.documentElement.clientHeight;
+      const ele = document.getElementById('fixed-bottom');
+      if (clientHeight > bodyHeight) {
+        (ele as HTMLElement).style.display = 'none';
+      } else {
+        (ele as HTMLElement).style.display = 'block';
       }
     });
   }
