@@ -1,16 +1,21 @@
 export default [
   {
     path: '/',
-    redirect: '/form',
+    redirect: '/entry'
+  },
+  {
+    path: '/entry',
+    name: 'entry',
+    component: () => import('@/views/entry/index.vue')
   },
   {
     path: '/form',
     name: 'form',
-    component: () => import('@/views/form/index.vue'),
+    component: () => import('@/views/form/index.vue')
   },
   {
-    path: '/date-picker',
-    name: 'date-picker',
-    component: () => import('@/views/datePicker/index.vue'),
-  },
+    path: '/info-list',
+    name: 'info-list',
+    component: () => import('@/views/infoList/index.vue')
+  }
 ];

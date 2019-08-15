@@ -1,5 +1,11 @@
 <template>
-  <div class="date-select">
+  <div class="layout__page">
+    <div class="layout__header">
+      <van-nav-bar :title="title"
+                   left-text="返回"
+                   left-arrow
+                   @click-left="onClickLeft" />
+    </div>
     <div class="dpb-week">
       <div class="indicator clearfix"
            v-if="isRange">
@@ -76,17 +82,15 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { NavBar } from 'vant';
 
-interface Day {
-  year: string;
-  month: string;
-  day: string;
-}
+Vue.use(NavBar);
 
-@Component({
-  components: {},
-})
+@Component
 export default class Calendar extends Vue {
+  @Prop({ type: String, default: '选择日期' })
+  private title!: string;
+
   @Prop({ type: Number, default: 2 })
   private monthLength!: number;
 
@@ -103,15 +107,15 @@ export default class Calendar extends Vue {
 
   @Prop({
     type: Object,
-    default: () => ({ year: '', month: '', day: '' }),
+    default: () => ({ year: '', month: '', day: '' })
   })
-  private beginInit!: Day;
+  private beginInit!: DateObject;
 
   @Prop({
     type: Object,
-    default: () => ({ year: '', month: '', day: '' }),
+    default: () => ({ year: '', month: '', day: '' })
   })
-  private endInit!: Day;
+  private endInit!: DateObject;
 
   private data: any[] = [];
   private year = new Date().getFullYear();
@@ -119,26 +123,27 @@ export default class Calendar extends Vue {
   private begin = {
     year: '',
     month: '',
-    day: '',
+    day: ''
   };
   private end = {
     year: '',
     month: '',
-    day: '',
+    day: ''
   };
   private start = {
     year: '',
     month: '',
-    day: '',
+    day: ''
   };
   private last = {
     year: '',
     month: '',
-    day: '',
+    day: ''
   };
   private length = 0;
 
   private onClickLeft() {
+    // this.$emit('back');
     this.$router.go(-1);
   }
 
@@ -148,10 +153,10 @@ export default class Calendar extends Vue {
     const last = this.last;
 
     const s1 = new Date(
-      start.year + '-' + start.month + '-' + start.day,
+      start.year + '-' + start.month + '-' + start.day
     ).getTime();
     const s2 = new Date(
-      last.year + '-' + last.month + '-' + last.day,
+      last.year + '-' + last.month + '-' + last.day
     ).getTime();
     const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
 
@@ -163,7 +168,7 @@ export default class Calendar extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + '-' + begin.month + '-' + begin.day,
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
     const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
     const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
@@ -182,7 +187,7 @@ export default class Calendar extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + '-' + begin.month + '-' + begin.day,
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
     const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
     return s === s1;
@@ -213,7 +218,7 @@ export default class Calendar extends Vue {
       this.end = {
         year: '',
         month: '',
-        day: '',
+        day: ''
       };
     } else if (this.begin.year && !this.end.year) {
       // 若不支持反向选择，则选中日期
@@ -221,7 +226,7 @@ export default class Calendar extends Vue {
         !this.isReverseAllow &&
         this.getDaysSize(
           this.begin.year + '-' + this.begin.month + '-' + this.begin.day,
-          day.year + '-' + day.month + '-' + day.day,
+          day.year + '-' + day.month + '-' + day.day
         ) <= 0
       ) {
         this.end = day;
@@ -238,10 +243,10 @@ export default class Calendar extends Vue {
       this.$emit('select', this.begin, this.end);
 
       const s1 = new Date(
-        this.begin.year + '-' + this.begin.month + '-' + this.begin.day,
+        this.begin.year + '-' + this.begin.month + '-' + this.begin.day
       ).getTime();
       const s2 = new Date(
-        this.end.year + '-' + this.end.month + '-' + this.end.day,
+        this.end.year + '-' + this.end.month + '-' + this.end.day
       ).getTime();
       this.length =
         parseInt(JSON.stringify((s2 - s1) / (1000 * 60 * 60 * 24)), 10) + 1;
@@ -251,7 +256,7 @@ export default class Calendar extends Vue {
   // 判断是否反转日期
   private isOpposite(end: any, begin: any) {
     const s1 = new Date(
-      begin.year + '-' + begin.month + '-' + begin.day,
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
     const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
     return s2 < s1;
@@ -265,7 +270,7 @@ export default class Calendar extends Vue {
     const begin = this.begin;
     const end = this.end;
     const s1 = new Date(
-      begin.year + '-' + begin.month + '-' + begin.day,
+      begin.year + '-' + begin.month + '-' + begin.day
     ).getTime();
     const s2 = new Date(end.year + '-' + end.month + '-' + end.day).getTime();
     const s = new Date(day.year + '-' + day.month + '-' + day.day).getTime();
@@ -308,7 +313,7 @@ export default class Calendar extends Vue {
       data.push({
         day: day < 10 ? '0' + day : JSON.stringify(day),
         month,
-        year,
+        year
       });
     }
     // 补全日期前几天
@@ -341,7 +346,7 @@ export default class Calendar extends Vue {
       const m = month + i > 12 ? month + i - 12 : month + i;
       const re = this.monthDate(
         JSON.stringify(y),
-        m < 10 ? '0' + m : JSON.stringify(m),
+        m < 10 ? '0' + m : JSON.stringify(m)
       );
       data.push(re);
     }
@@ -359,7 +364,7 @@ export default class Calendar extends Vue {
       day:
         date.getDate() < 10
           ? '0' + JSON.stringify(date.getDate())
-          : JSON.stringify(date.getDate()),
+          : JSON.stringify(date.getDate())
     };
 
     date.setDate(date.getDate() + this.range);
@@ -372,7 +377,7 @@ export default class Calendar extends Vue {
       day:
         date.getDate() < 10
           ? '0' + JSON.stringify(date.getDate())
-          : JSON.stringify(date.getDate()),
+          : JSON.stringify(date.getDate())
     };
 
     this.begin = this.beginInit;
