@@ -287,10 +287,11 @@ todo
   解决办法：全局监听 window 的 resize 事件，当触发事件后，获取 id 名为 fixed-bottom 的元素（可提前约定好如何区分定位在窗口底部的元素），将其设置成 `display: none`。键盘收回时，则设置成 `display: block;`。
 
   ```javascript
+  const clientHeight = document.documentElement.clientHeight;
   window.addEventListener("resize", () => {
-    const body_h = document.documentElement.clientHeight;
+    const bodyHeight = document.documentElement.clientHeight;
     const ele = document.getElementById('fixed-bottom');
-    if (client_h > body_h) {
+    if (clientHeight > bodyHeight) {
       (ele as HTMLElement).style.display = 'none';
     } else {
       (ele as HTMLElement).style.display = 'block';
