@@ -23,4 +23,29 @@ interface UserInfo {
   userid?: string;
 }
 
+interface RequestErrorInfo {
+  error: Error;
+  type: string;
+  requestUrl: string;
+  requestOptions: string;
+  response?: string;
+}
+
+interface ListQuery extends AnyObject {
+  page: number;
+  count: number;
+}
+
+interface DailyItem {
+  dailyId?: string;
+  today?: string | null;
+  tomorrow?: string | null;
+  goal?: string | null;
+  userName?: string;
+  create?: number;
+  update?: number;
+
+  [propName: string]: any;
+}
+
 declare module 'vue-page-stack';
