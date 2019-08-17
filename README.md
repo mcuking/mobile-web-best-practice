@@ -8,6 +8,10 @@
 
 <img src="./demo_url.png" width="160">
 
+## 目录
+
+[TOC]
+
 ## 组件库
 
 [vant](https://youzan.github.io/vant/#/zh-CN/intro)
@@ -111,6 +115,56 @@ class Home {
 }
 
 export default new Home();
+```
+
+## 阻止原生返回事件
+
+开发中可能会遇到下面这个需求：
+当页面弹出一个 popup 或 dialog 组件时，点击返回键时是隐藏弹出的组件而不是返回到上一个页面。
+
+为了解决这个问题，我们可以从路由栈角度思考。一般弹出组件是不会在路由栈上添加任何记录，因此我们在弹出组件时，可以在路由栈中 push 一个记录，为了不让页面跳转，我们可以把跳转的目标路由设置为当前页面路由，并加上一个 query 来标记这个组件弹出的状态。
+
+然后监听 query 的变化，当点击弹出组件时，query 中与该弹出组件有关的标记变为 true，则将弹出组件设为显示；当用户点击 native 返回键时，路由返回上一个记录，仍然是当前页面路由，不过 query 中与该弹出组件有关的标记不再是 true 了，这样我们就可以把弹出组件设置成隐藏，同时不会返回上一个页面。相关代码如下：
+
+```ts
+<template>
+  <van-cell title="几时入坑"
+                    is-link
+                    :value="textData.pitDateStr"
+                    @click="goToSelect('calendar')" />
+  <van-popup v-model="showCalendar"
+              position="right"
+              :style="{ height: '100%', width: '100%' }">
+    <Calendar title="选择入坑时间"
+              @select="onSelectPitDate" />
+  </van-popup>
+<template/>
+<script lang="ts">
+...
+export default class Form extends Vue {
+  private showCalendar = false;
+  private goToSelect(popupName: string) {
+    this.$router.push({ name: 'form', query: { [popupName]: 'true' } });
+  }
+
+  private onSelectPitDate(...res: DateObject[]) {
+    ...
+    this.$router.go(-1);
+  }
+
+  @Watch('$route.query')
+  private handlePopup(val: any) {
+    switch (true) {
+      case val.calendar && val.calendar === 'true':
+        this.showCalendar = true;
+        break;
+      default:
+        this.showCalendar = false;
+        break;
+    }
+  }
+}
+</script>
 ```
 
 ## 样式
@@ -426,6 +480,7 @@ todo
   window.addEventListener('resize', () => {
     const bodyHeight = document.documentElement.clientHeight;
     const ele = document.getElementById('fixed-bottom');
+    if (!ele) return;
     if (clientHeight > bodyHeight) {
       (ele as HTMLElement).style.display = 'none';
     } else {

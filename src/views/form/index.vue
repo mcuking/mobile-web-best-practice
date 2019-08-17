@@ -4,7 +4,7 @@
       <van-nav-bar title="江湖英雄帖"
                    left-text="返回"
                    left-arrow
-                   @click-left="onClickLeft" />
+                   @click-left="onGoBack" />
     </div>
     <div class="layout__body">
       <van-cell-group>
@@ -12,27 +12,38 @@
                    clearable
                    label="尊姓大名"
                    placeholder="请输入大名" />
-        <van-field v-model="formData.password"
+        <van-field v-model="formData.skill"
                    clearable
                    label="会啥绝招"
                    placeholder="请输入绝招" />
         <van-cell title="几时入坑"
                   is-link
-                  :value="textData.dateStr"
-                  @click="goToSelectDate" />
+                  :value="textData.pitDateStr"
+                  @click="goToSelect('calendar')" />
+        <van-cell title="何方门派"
+                  is-link
+                  :value="textData.sectStr"
+                  @click="goToSelect('sect')" />
       </van-cell-group>
     </div>
-    <van-popup v-model="popupShow"
+    <van-popup v-model="showCalendar"
                position="right"
                :style="{ height: '100%', width: '100%' }">
-      <Calendar title="选择开箱日子"
-                @select="selectDate" />
+      <Calendar title="选择入坑时间"
+                @select="onSelectPitDate" />
+    </van-popup>
+    <van-popup v-model="showSects"
+               position="bottom">
+      <van-picker show-toolbar
+                  :columns="sects"
+                  @cancel="onGoBack"
+                  @confirm="onSelectSect" />
     </van-popup>
     <div class="form__button--submit"
          id="fixed-bottom">
       <van-button type="primary"
                   size="large"
-                  @click="handleSubmit">
+                  @click="onSubmit">
         提交
       </van-button>
     </div>
@@ -41,7 +52,7 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Cell, Field, CellGroup, Button, NavBar, Popup } from 'vant';
+import { Cell, Field, CellGroup, Button, NavBar, Popup, Picker } from 'vant';
 import Calendar from '@/components/calendar/index.vue';
 
 Vue.use(Cell)
@@ -49,7 +60,8 @@ Vue.use(Cell)
   .use(CellGroup)
   .use(Button)
   .use(NavBar)
-  .use(Popup);
+  .use(Popup)
+  .use(Picker);
 
 @Component({
   components: {
@@ -57,44 +69,63 @@ Vue.use(Cell)
   }
 })
 export default class Form extends Vue {
-  private popupShow = false;
+  private showCalendar = false;
+
+  private showSects = false;
+
+  private sects = ['武当派', '少林派', '峨嵋派', '华山派', '丐帮'];
 
   private formData = {
     name: '',
-    password: '',
-    date: ''
+    skill: '',
+    pitDate: '',
+    sect: ''
   };
 
   private textData = {
-    dateStr: ''
+    pitDateStr: '',
+    sectStr: ''
   };
 
-  private onClickLeft() {
+  private onGoBack() {
     this.$router.go(-1);
   }
 
-  private handleSubmit() {
+  private onSubmit() {
     this.$router.push({ name: 'info-list' });
   }
 
-  private goToSelectDate() {
-    this.$router.push({ name: 'form', query: { calendar: 'true' } });
+  private goToSelect(popupName: string) {
+    this.$router.push({ name: 'form', query: { [popupName]: 'true' } });
   }
 
-  private selectDate(...res: DateObject[]) {
-    this.formData.date = `${res[0].year}-${res[0].month}-${res[0].day}`;
-    this.textData.dateStr = `${res[0].year}年${res[0].month}月${res[0].day}日`;
+  private onSelectPitDate(...res: DateObject[]) {
+    this.formData.pitDate = `${res[0].year}-${res[0].month}-${res[0].day}`;
+    this.textData.pitDateStr = `${res[0].year}年${res[0].month}月${res[0].day}日`;
     setTimeout(() => {
-      this.$router.go(-1);
+      this.onGoBack();
     }, 100);
+  }
+
+  private onSelectSect(sect: any) {
+    this.formData.sect = sect;
+    this.textData.sectStr = sect;
+    this.onGoBack();
   }
 
   @Watch('$route.query')
   private handlePopup(val: any) {
-    if (val.calendar && val.calendar === 'true') {
-      this.popupShow = true;
-    } else {
-      this.popupShow = false;
+    switch (true) {
+      case val.calendar && val.calendar === 'true':
+        this.showCalendar = true;
+        break;
+      case val.sect && val.sect === 'true':
+        this.showSects = true;
+        break;
+      default:
+        this.showCalendar = false;
+        this.showSects = false;
+        break;
     }
   }
 }
