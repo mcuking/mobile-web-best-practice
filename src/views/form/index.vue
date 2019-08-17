@@ -33,6 +33,7 @@
                 @select="onSelectPitDate" />
     </van-popup>
     <van-popup v-model="showSects"
+               @click-overlay="onGoBack"
                position="bottom">
       <van-picker show-toolbar
                   :columns="sects"
