@@ -1,10 +1,11 @@
 # mobile-web-best-practice
 
-移动端 web 最佳实践，基于 vue-cli3 搭建的 typescript 项目，可以用于 hybrid 应用或者纯 webapp 开发。以下大部分内容同样适用于 react 等前端框架。
+移动端 web 最佳实践，基于 vue-cli3 搭建的 typescript 项目，可以用于 hybrid 应用或者纯 webapp 开发。以下大部分内容同样适用于 [react](https://reactjs.org/) 等前端框架。
 
 [Demo 地址](https://mcuking.github.io/mobile-web-best-practice/)
 
 也可手机浏览器扫码体验：
+
 <img src="./demo_url.png" width="160">
 
 ## 组件库
@@ -39,7 +40,7 @@ vant 官方目前已经支持自定义样式主题，本项目也采用了该方
 
 开源社区中有很多功能强大的 JSBridge，例如上面列举的库。本项目基于保持 iOS android 平台接口统一原因，采用了 DSBridge，各位可以选择适合自己项目的工具。
 
-推荐一个基于安卓平台实现的教学版 JSBridge，里面详细阐述了如何基于底层接口如何一步步封装一个可用的 JSBridge：
+推荐一个笔者之前写的一个基于安卓平台实现的教学版 [JSBridge](https://github.com/mcuking/JSBridge)，里面详细阐述了如何基于底层接口一步步封装一个可用的 JSBridge：
 
 [JSBridge 实现原理](https://github.com/mcuking/JSBridge)
 
@@ -51,11 +52,12 @@ vant 官方目前已经支持自定义样式主题，本项目也采用了该方
 
 [vue-stack-router](https://github.com/luojilab/vue-stack-router)
 
-在使用 h5 开发 app，总会遇到类似需求，从列表进入详情页，返回后能够记住当前位置，或者从表单点击某项进入到其他页面选择，然后回到表单页，需要记住之前表单填写的数据。可是目前 vue 或 react 框架的路由，均不支持同时存在两个页面，所以需要路由堆栈进行管理。
+在使用 h5 开发 app，会经常遇到下面的需求：
+从列表进入详情页，返回后能够记住当前位置，或者从表单点击某项进入到其他页面选择，然后回到表单页，需要记住之前表单填写的数据。可是目前 vue 或 [react](https://reactjs.org/) 框架的路由，均不支持同时存在两个页面实例，所以需要路由堆栈进行管理。
 
-其中 [vue-page-stack](https://github.com/hezhongfeng/vue-page-stack) 和 [vue-navigation](https://github.com/zack24q/vue-navigation) 均受 vue 的 keepalive 启发，基于 vue-router，当进入某个页面时，会查看当前页面是否有缓存，有缓存的话就取出缓存，并且清除排在他后面的所有 vnode，没有缓存就是新的页面，需要存储或者是 replace 当前页面，向栈里面 push 对应的 vnode，从而实现记住页面状态的功能。
+其中 [vue-page-stack](https://github.com/hezhongfeng/vue-page-stack) 和 [vue-navigation](https://github.com/zack24q/vue-navigation) 均受 [vue](https://cn.vuejs.org/) 的 keepalive 启发，基于 [vue-router](https://router.vuejs.org/)，当进入某个页面时，会查看当前页面是否有缓存，有缓存的话就取出缓存，并且清除排在他后面的所有 vnode，没有缓存就是新的页面，需要存储或者是 replace 当前页面，向栈里面 push 对应的 vnode，从而实现记住页面状态的功能。
 
-而逻辑思维前端团队的 [vue-stack-router](https://github.com/luojilab/vue-stack-router) 则另辟蹊径，抛开了 [vue-router](https://router.vuejs.org/)，自己独立实现了路由管理，相较于 vue-router，主要是支持同时可以存活 A 和 B 两个页面的实例，或者 A 页面不同状态的两个实例，并支持原生左滑功能。但由于项目还在初期完善，功能还没有 vue-router 强大，建议持续关注后续动态再做决定是否引入。
+而逻辑思维前端团队的 [vue-stack-router](https://github.com/luojilab/vue-stack-router) 则另辟蹊径，抛开了 [vue-router](https://router.vuejs.org/)，自己独立实现了路由管理，相较于 [vue-router](https://router.vuejs.org/)，主要是支持同时可以存活 A 和 B 两个页面的实例，或者 A 页面不同状态的两个实例，并支持原生左滑功能。但由于项目还在初期完善，功能还没有 [vue-router](https://router.vuejs.org/) 强大，建议持续关注后续动态再做决定是否引入。
 
 本项目使用的是 [vue-page-stack](https://github.com/hezhongfeng/vue-page-stack)。同时推荐两片相关文章：
 
@@ -71,9 +73,11 @@ vant 官方目前已经支持自定义样式主题，本项目也采用了该方
 
 [mem](https://github.com/sindresorhus/mem) 基本原理是通过以接收的函数为 key 创建一个 WeakMap，然后再以函数参数为 key 创建一个 Map，value 就是函数的执行结果，同时将这个 Map 作为刚刚的 WeakMap 的 value 形成嵌套关系，从而实现对同一个函数不同参数进行缓存。而且支持传入 maxAge，即数据的有效期，当某个数据到达有效期后，会自动销毁，避免内存泄漏。
 
-[mem](https://github.com/sindresorhus/mem) 作为高阶函数，可以直接接受封装好的接口请求。但是为了更加直观简便，我们可以按照类的形式集成我们的接口函数，然后就可以用装饰器的形式使用 mem 了。下面是相关代码：
+选择 WeakMap 是因为其相对 Map 保持对键名所引用的对象是弱引用，即垃圾回收机制不将该引用考虑在内。只要所引用的对象的其他引用都被清除，垃圾回收机制就会释放该对象所占用的内存。也就是说，一旦不再需要，WeakMap 里面的键名对象和所对应的键值对会自动消失，不用手动删除引用。
 
-```javascript
+[mem](https://github.com/sindresorhus/mem) 作为高阶函数，可以直接接受封装好的接口请求。但是为了更加直观简便，我们可以按照类的形式集成我们的接口函数，然后就可以用装饰器的方式使用 mem 了（装饰器只能修饰类和类的类的方法，因为普通函数会存在变量提升）。下面是相关代码：
+
+```ts
 import http from '../http';
 import mem from 'mem';
 
@@ -127,7 +131,7 @@ todo
 
 ## 微前端
 
-[qianlun](https://github.com/umijs/qiankun)
+[qiankun](https://github.com/umijs/qiankun)
 
 todo
 
@@ -151,9 +155,9 @@ todo
 
 在调试方面，本项目使用 [eruda](https://github.com/liriliri/eruda) 作为手机端调试面板，功能相当于打开 PC 控制台，可以很方便地查看 console, network, cookie, localStorage 等关键调试信息。与之类似地工具还有微信的前端研发团队开发的 [vconsole](https://github.com/Tencent/vConsole)，各位可以选择适合自己项目的工具。
 
-关于 eruda 使用，推荐使用 cdn 方式加载，至于什么时候加载 eruda，可以根据不同项目制定不同策略。示例代码如下：
+关于 [eruda](https://github.com/liriliri/eruda) 使用，推荐使用 cdn 方式加载，至于什么时候加载 [eruda](https://github.com/liriliri/eruda) ，可以根据不同项目制定不同策略。示例代码如下：
 
-```javascript
+```ts
 <script>
   (function() {
     const NO_ERUDA = window.location.protocol === 'https:';
@@ -171,11 +175,11 @@ todo
 
 [fiddler](https://www.telerik.com/fiddler)
 
-虽然有了 eruda 调试工具，但某些情况下仍不能满足需求，比如现网完全关闭 eruda 等情况。
+虽然有了 [eruda](https://github.com/liriliri/eruda) 调试工具，但某些情况下仍不能满足需求，比如现网完全关闭 [eruda](https://github.com/liriliri/eruda) 等情况。
 
 此时就需要抓包工具，相关工具主要就是上面罗列的这两个，各位可以选择适合自己项目的工具。
 
-通过 charles 可以清晰的查看所有请求的信息(注：https 下抓包需要在手机上配置相关证书)。当然 charles 还有更多强大功能，比例模拟弱网情况，资源映射等。
+通过 [charles](https://www.charlesproxy.com/) 可以清晰的查看所有请求的信息(注：https 下抓包需要在手机上配置相关证书)。当然 [charles](https://www.charlesproxy.com/) 还有更多强大功能，比例模拟弱网情况，资源映射等。
 
 推荐一篇不错的 charles 使用教程：
 
@@ -197,23 +201,25 @@ todo
 
 这时就非常需要一个异常监控平台，将异常实时上传到平台，并及时通知相关人员。
 
-相关工具有 sentry，fundebug 等，各位可以选择适合自己项目的工具。下面是 sentry 在本项目应用时使用的相关配套工具。
+相关工具有 [sentry](https://github.com/getsentry/sentry)，[fundebug](https://www.fundebug.com/) 等，其中 sentry 因为功能强大，支持多平台监控（不仅可以监控前端项目），完全开源，可以私有化部署等特点，而被广泛采纳。
+
+下面是 [sentry](https://github.com/getsentry/sentry) 在本项目应用时使用的相关配套工具。
 
 **sentry 针对 javascript 的 sdk**
 
 [sentry-javascript](https://github.com/getsentry/sentry-javascript)
 
-**sourcemap 自动上传 webpack 插件**
+**自动上传 sourcemap 的 webpack 插件**
 
 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)
 
-**编译时自动添加错误上报函数的 babel 插件**
+**编译时自动在 try catch 中添加错误上报函数的 babel 插件**
 
 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)
 
 **补充：**
 
-前端的异常主要分成如下三部分：
+前端的异常主要有以下几个部分：
 
 - 静态资源加载异常
 
@@ -221,7 +227,136 @@ todo
 
 - js 报错
 
+- 网页崩溃
+
+其中静态资源加载失败，可以通过 window.addEventListener('error', ..., true) 在事件捕获阶段获取，然后筛选出资源加载失败的错误并手动上报错误。核心代码如下：
+
+```ts
+// 全局监控资源加载错误
+window.addEventListener(
+  'error',
+  event => {
+    // 过滤 js error
+    const target = event.target || event.srcElement;
+    const isElementTarget =
+      target instanceof HTMLScriptElement ||
+      target instanceof HTMLLinkElement ||
+      target instanceof HTMLImageElement;
+    if (!isElementTarget) {
+      return false;
+    }
+    // 上报资源地址
+    const url = (target as any).src || (target as any).href;
+
+    this.log({
+      error: new Error(`ResourceLoadError: ${url}`),
+      type: 'resource load'
+    });
+  },
+  true
+);
+```
+
+关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数。核心代码如下：
+
+```ts
+function errorReport(
+  url: string,
+  error: string | Error,
+  requestOptions: AxiosRequestConfig,
+  response?: AnyObject
+) {
+  if (window.$sentry) {
+    const errorInfo: RequestErrorInfo = {
+      error: typeof error === 'string' ? new Error(error) : error,
+      type: 'request',
+      requestUrl: url,
+      requestOptions: JSON.stringify(requestOptions)
+    };
+
+    if (response) {
+      errorInfo.response = JSON.stringify(response);
+    }
+
+    window.$sentry.log(errorInfo);
+  }
+}
+```
+
+关于全局 js 报错，sentry 针对的前端的 sdk -- @sentry/browser 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
+
+需要注意的是其中 window.onerror = (message, source, lineno, colno, error) =>{} 不同于 window.addEventListener('error', ...)，window.onerror 捕获的信息更丰富，包括了错误字符串信息、发生错误的 js 文件，错误所在的行数、列数、和 Error 对象（其中还会有调用堆栈信息等）。所以 sentry 会选择 window.onerror 进行 js 全局监控。
+
+但有一种错误是 window.onerror 监听不到的，那就是 unhandledrejection 错误，这个错误是当 promise reject 后没有 catch 住所引起的。当然 sentry 的 sdk 也已经做了监听。
+
+针对 vue 项目，也可对 errorHandler 钩子进行全局监听，react 的话可以通过 componentDidCatch 钩子，vue 相关代码如下：
+
+```ts
+// 全局监控 Vue errorHandler
+Vue.config.errorHandler = (error, vm, info) => {
+  window.$sentry.log({
+    error,
+    type: 'vue errorHandler',
+    vm,
+    info
+  });
+};
+```
+
+但是对于我们业务中，经常会对一些以报错代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
+
+```js
+if (!IS_DEV) {
+  plugins.push([
+    'try-catch-error-report',
+    {
+      expression: 'window.$sentry.log',
+      needFilename: true,
+      needLineNo: true,
+      needColumnNo: false,
+      needContext: true,
+      exclude: ['node_modules']
+    }
+  ]);
+}
+```
+
+针对跨域 js 问题，当加载的不同域的 js 文件时，例如通过 cdn 加载打包后的 js。如果 js 报错，window.onerror 只能捕获到 script error，没有任何有效信息能帮助我们定位问题。此时就需要我们做一些事情：
+第一步、服务端需要在返回 js 的返回头设置 Access-Control-Allow-Origin: \*
+第二部、设置 script 标签属性 crossorigin，代码如下：
+
+```html
+<script src="http://helloworld/main.js" crossorigin></script>
+```
+
+如果是动态添加的，也可动态设置：
+
+```js
+const script = document.createElement('script');
+script.crossOrigin = 'anonymous';
+script.src = url;
+document.body.appendChild(script);
+```
+
+针对网页崩溃问题，推荐一个基于 service work 的监控方案，相关文章已列在下面的。如果是 webview 加载网页，也可以通过 webview 加载失败的钩子监控网页崩溃等。
+
+[如何监控网页崩溃？](https://juejin.im/entry/5be158116fb9a049c6434f4a)
+
+最后，因为部署到线上的代码一般都是经过压缩混淆的，如果没有上传 sourcemap 的话，是无法定位到具体源码的，可以现在 项目中添加 .sentryclirc 文件，其中内容可参考本项目的 .sentryclirc，然后通过 sentry-cli (需要全局全装 sentry-cli 即`npm install sentry-cli`)命令行工具进行上传，命令如下：
+
+```
+sentry-cli releases -o 机构名 -p 项目名 files 版本 upload-sourcemaps sourcemap 文件相对位置 --url-prefix js 在线上相对根目录的位置 --rewrite
+// 示例
+sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps dist/static/js --url-prefix '~/static/js/' --rewrite
+```
+
+当然官方也提供了 webpack 插件 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)，当打包时触发 webpack 的 after-emit 事件钩子（即生成资源到 output 目录之后），插件会自动上传打包目录中的 sourcemap 和关联的 js，相关配置可参考本项目的 vue.config.js 文件。
+
+通常为了安全，是不允许在线上部署 sourcemap 文件的，所以上传 sourcemap 到 sentry 后，可手动删除线上 sourcemap 文件。
+
 ## 性能监控平台
+
+[performance](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/performance)
 
 todo
 
@@ -244,35 +379,35 @@ todo
 
   各位可以选择适合自己项目的方式，有更好的处理方式欢迎留言。
 
-* **input 标签在部分安卓 webview 上无法实现上传图片功能**
+- **input 标签在部分安卓 webview 上无法实现上传图片功能**
 
   因为 Android 的版本碎片问题，很多版本的 WebView 都对唤起函数有不同的支持。我们需要重写 WebChromeClient 下的 openFileChooser()（5.0 及以上系统回调 onShowFileChooser()）。我们通过 Intent 在 openFileChooser()中唤起系统相机和支持 Intent 的相关 app。
 
   相关文章：
   [【Android】WebView 的 input 上传照片的兼容问题](https://juejin.im/post/5a322cdef265da43176a2913)
 
-* **input 标签在 iOS 上唤起软键盘，键盘收回后页面不回落（部分情况页面看上去已经回落，实际结构并未回落）**
+- **input 标签在 iOS 上唤起软键盘，键盘收回后页面不回落（部分情况页面看上去已经回落，实际结构并未回落）**
 
   input 焦点失焦后，ios 软键盘收起，但没有触发 window resize，导致实际页面 dom 仍然被键盘顶上去--错位。
   解决办法：全局监听 input 失焦事件，当触发事件后，将 body 的 scrollTop 设置为 0。
 
-  ```javascript
+  ```ts
   document.addEventListener('focusout', () => {
     document.body.scrollTop = 0;
   });
   ```
 
-* **唤起软键盘后会遮挡输入框**
+- **唤起软键盘后会遮挡输入框**
 
   当 input 或 textarea 获取焦点后，软键盘会遮挡输入框。
   解决办法：全局监听 window 的 resize 事件，当触发事件后，获取当前 active 的元素并检验是否为 input 或 textarea 元素，如果是则调用元素的 scrollIntoViewIfNeeded 即可。
 
-  ```javascript
-  window.addEventListener("resize", () => {
+  ```ts
+  window.addEventListener('resize', () => {
     // 判断当前 active 的元素是否为 input 或 textarea
     if (
-      document.activeElement!.tagName === "INPUT" ||
-      document.activeElement!.tagName === "TEXTAREA"
+      document.activeElement!.tagName === 'INPUT' ||
+      document.activeElement!.tagName === 'TEXTAREA'
     ) {
       setTimeout(() => {
         // 原生方法，滚动至需要显示的位置
@@ -282,13 +417,13 @@ todo
   });
   ```
 
-* **唤起键盘后 `position: fixed;bottom: 0px;` 元素被键盘顶起**
+- **唤起键盘后 `position: fixed;bottom: 0px;` 元素被键盘顶起**
 
   解决办法：全局监听 window 的 resize 事件，当触发事件后，获取 id 名为 fixed-bottom 的元素（可提前约定好如何区分定位在窗口底部的元素），将其设置成 `display: none`。键盘收回时，则设置成 `display: block;`。
 
-  ```javascript
+  ```ts
   const clientHeight = document.documentElement.clientHeight;
-  window.addEventListener("resize", () => {
+  window.addEventListener('resize', () => {
     const bodyHeight = document.documentElement.clientHeight;
     const ele = document.getElementById('fixed-bottom');
     if (clientHeight > bodyHeight) {
@@ -297,6 +432,16 @@ todo
       (ele as HTMLElement).style.display = 'block';
     }
   });
+  ```
+
+- **点击网页输入框会导致网页放大**
+  通过 viewport 设置 user-scalable=no 即可，（注意：当 user-scalable=no 时，无需设置 minimum-scale=1, maximum-scale=1，因为已经禁止了用户缩放页面了，允许的缩放范围也就不存在了）。代码如下：
+
+  ```html
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0,user-scalable=0,viewport-fit=cover"
+  />
   ```
 
 - **webview 通过 loadUrl 加载的页面运行时却通过第三方浏览器打开，代码如下**
