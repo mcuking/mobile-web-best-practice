@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/browser';
 import * as Integrations from '@sentry/integrations';
 
 class Report {
-
   /**
    * 单例模式
    */
@@ -31,10 +30,10 @@ class Report {
     Sentry.init({
       dsn: this.options.dsn,
       integrations: [
-        new Integrations.Vue({ Vue: this.Vue, attachProps: true }),
+        new Integrations.Vue({ Vue: this.Vue, attachProps: true })
       ],
       release: this.options.release,
-      environment: this.options.environment,
+      environment: this.options.environment
     });
   }
 
@@ -51,22 +50,24 @@ class Report {
     window.addEventListener(
       'error',
       (event) => {
-        // 过滤js error
+        // 过滤 js error
         const target = event.target || event.srcElement;
         const isElementTarget =
           target instanceof HTMLScriptElement ||
           target instanceof HTMLLinkElement ||
           target instanceof HTMLImageElement;
-        if (!isElementTarget) { return false; }
+        if (!isElementTarget) {
+          return false;
+        }
         // 上报资源地址
         const url = (target as any).src || (target as any).href;
 
         this.log({
           error: new Error(`ResourceLoadError: ${url}`),
-          type: 'resource load',
+          type: 'resource load'
         });
       },
-      true,
+      true
     );
   }
   /**

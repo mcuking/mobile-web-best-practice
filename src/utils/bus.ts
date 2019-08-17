@@ -20,6 +20,6 @@ export default new Vue({
     emit(event: string, ...args: any[]) {
       this.$emit(event, ...args);
       return this;
-    },
-  },
+    }
+  }
 });
