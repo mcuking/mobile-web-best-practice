@@ -50,10 +50,12 @@ export default class Home extends Vue {
       // 解决键盘弹起后 fixed 定位元素被顶起问题
       const bodyHeight = document.documentElement.clientHeight;
       const ele = document.getElementById('fixed-bottom');
-      if (clientHeight > bodyHeight) {
-        (ele as HTMLElement).style.display = 'none';
-      } else {
-        (ele as HTMLElement).style.display = 'block';
+      if (ele) {
+        if (clientHeight > bodyHeight) {
+          (ele as HTMLElement).style.display = 'none';
+        } else {
+          (ele as HTMLElement).style.display = 'block';
+        }
       }
     });
   }
