@@ -2,11 +2,12 @@
 
 移动端 web 最佳实践，基于 [vue-cli3](https://cli.vuejs.org/) 搭建的 [typescript](http://www.typescriptlang.org/) 项目，可以用于 hybrid 应用或者纯 webapp 开发。以下大部分内容同样适用于 [react](https://reactjs.org/) 等前端框架。
 
-[Demo 地址](https://mcuking.github.io/mobile-web-best-practice/)
+## 在线体验
 
-也可手机浏览器扫码体验：
-
-<img src="./demo_url.png" width="160">
+| 体验平台 | 二维码                                    | 链接                                                            |
+| -------- | ----------------------------------------- | --------------------------------------------------------------- |
+| Web      | <img src="./mwbp.png" width=140>          | [点击体验](https://mcuking.github.io/mobile-web-best-practice/) |
+| Android  | <img src="./mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer)                 |
 
 ## 目录
 
