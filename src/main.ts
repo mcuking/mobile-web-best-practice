@@ -5,7 +5,6 @@ import store from './store';
 import VuePageStack from 'vue-page-stack';
 import Report from './utils/report';
 import GlobalMethods from './utils/global-method';
-import setting from '../package.json';
 import initMockService from '@/mocks';
 
 const DSN = 'https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795';
@@ -14,7 +13,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 if (!IS_DEV) {
   const sentry = Report.getInstance(Vue, {
     dsn: DSN,
-    release: setting.version,
+    release: __VERSION__, // from webpack DefinePlugin
     environment: 'Prod'
   });
 

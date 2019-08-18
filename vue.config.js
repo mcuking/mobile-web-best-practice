@@ -2,17 +2,21 @@ const webpack = require('webpack');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEV = NODE_ENV === 'development';
 const SentryPlugin = require('@sentry/webpack-plugin');
-const VERSION = require('./package.json').version;
+const version = require('./package.json').version;
 
-const plugins = [];
+const plugins = [
+  new webpack.DefinePlugin({
+    __VERSION__: JSON.stringify(version)
+  })
+];
 
 if (!IS_DEV) {
   // 由于国内访问 sentry 官网网络不稳定，所以关闭自动上传 map 文件插件
   // plugins.push(
   //   new SentryPlugin({
-  //     release: VERSION,
-  //     include: './dist/js',
-  //     urlPrefix: '~/js/',
+  //     release: version,
+  //     include: './dist/static/js',
+  //     urlPrefix: '~/static/js/',
   //     ignore: ['node_modules']
   //   })
   // );

@@ -1,3 +1,5 @@
+declare var __VERSION__: string;
+
 interface AnyObject {
   [propName: string]: any;
 }
