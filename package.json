@@ -41,6 +41,7 @@
     "less": "^3.0.4",
     "less-loader": "^4.1.0",
     "lint-staged": "^8.1.5",
+    "postcss-px-to-viewport": "^1.1.1",
     "typescript": "^3.4.3",
     "vue-template-compiler": "^2.6.10"
   },
