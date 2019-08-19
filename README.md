@@ -16,7 +16,7 @@
 - [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
 - [阻止原生返回事件](#阻止原生返回事件)
-- [样式](#样式)
+- [样式适配](#样式适配)
 - [表单](#表单)
 - [打包策略](#打包策略)
 - [微前端](#微前端)
@@ -183,11 +183,61 @@ export default class Form extends Vue {
 </script>
 ```
 
-## 样式
+## 样式适配
 
 [postcss-px-to-viewport](https://github.com/evrone/postcss-px-to-viewport)
 
-todo
+[Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)
+
+[flexible](https://github.com/amfe/lib-flexible)
+
+[postcss-pxtorem](https://github.com/cuth/postcss-pxtorem)
+
+[Autoprefixer](https://github.com/postcss/autoprefixer)
+
+[browserslist](https://github.com/browserslist/browserslist)
+
+在移动端网页开发时，样式适配始终是一个绕不开的问题。对此目前主流方案有 vw 和 rem（当然还有 vw + rem 结合方案，请见下方 rem-vw-layout 仓库），其实基本原理都是相通的，就是随着屏幕宽度或字体大小成正比变化。因为原理方面的详细资料网络上已经有很多了，就不在这里赘述了。下面主要提供一些这工程方面的工具。
+
+关于 rem，阿里无线前端团队在 15 年的时候基于 rem 推出了 flexible 方案，以及 postcss 提供的自动转换 px 到 rem 的插件 postcss-pxtorem。
+
+关于 vw，可以使用 postcss-px-to-viewport 进行自动转换 px 到 vw。postcss-px-to-viewport 相关配置如下：
+
+```js
+"postcss-px-to-viewport": {
+  viewportWidth: 375, // 视窗的宽度，对应的是我们设计稿的宽度，一般是375
+  viewportHeight: 667, // 视窗的高度，根据750设备的宽度来指定，一般指定1334，也可以不配置
+  unitPrecision: 3,  // 指定`px`转换为视窗单位值的小数位数（很多时候无法整除）
+  viewportUnit: 'vw', // 指定需要转换成的视窗单位，建议使用vw
+  selectorBlackList: ['.ignore', '.hairlines'], // 指定不转换为视窗单位的类，可以自定义，可以无限添加,建议定义一至两个通用的类名
+  minPixelValue: 1, // 小于或等于`1px`不转换为视窗单位，你也可以设置为你想要的值
+  mediaQuery: false // 媒体查询里的单位是否需要转换单位
+}
+```
+
+下面是 vw 和 rem 的优缺点对比图：
+
+<img src="./vw-rem.png" width="1200"/>
+
+关于 vw 兼容性问题，目前在移动端 iOS 8 以上以及 Android 4.4 以上获得支持。如果有兼容更低版本需求的话，可以选择 viewport 的 pollify 方案，其中比较主流的是 [Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)。
+
+本方案因不准备兼容低版本，所以直接选择了 vw 方案，各位可根据项目需求选择不同的方案。
+
+另外关于设置 css 兼容不同浏览器，想必大家都知道 Autoprefixer（vue-cli3 已经默认集成了），那么如何设置要兼容的范围呢？推荐使用 browserslist，可以在 .browserslistrc 或者 pacakage.json 中 browserslist 部分设置兼容浏览器范围。因为不止 Autoprefixer，还有 Babel，postcss-preset-env 等工具都会读取 browserslist 的兼容配置，这样比较容易使 js css 兼容浏览器的范围保持一致。下面是本项目的 .browserslistrc 配置：
+
+```js
+iOS >= 10  //  即 iOS Safari
+Android >= 6.0 // 即 Android WebView
+last 2 versions // 每个浏览器最近的两个版本
+```
+
+最后推荐一些移动端样式适配的资料：
+
+[rem-vw-layout](https://github.com/imwtr/rem-vw-layout)
+
+[细说移动端 经典的 REM 布局 与 新秀 VW 布局](https://www.cnblogs.com/imwtr/p/9648233.html)
+
+[如何在 Vue 项目中使用 vw 实现移动端适配](https://www.jianshu.com/p/1f1b23f8348f)
 
 ## 表单
 
@@ -305,7 +355,7 @@ todo
 // 全局监控资源加载错误
 window.addEventListener(
   'error',
-  event => {
+  (event) => {
     // 过滤 js error
     const target = event.target || event.srcElement;
     const isElementTarget =
