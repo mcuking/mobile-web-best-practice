@@ -1,4 +1,6 @@
-declare var __VERSION__: string;
+declare const __VERSION__: string;
+
+declare module 'vue-page-stack';
 
 interface AnyObject {
   [propName: string]: any;
@@ -12,6 +14,7 @@ interface DateObject {
 
 interface Window {
   $sentry: AnyObject;
+  $platform: string;
 }
 
 interface ReportOptions {
@@ -25,12 +28,19 @@ interface UserInfo {
   userid?: string;
 }
 
-interface RequestErrorInfo {
+interface ServerApiErrorInfo {
   error: Error;
   type: string;
   requestUrl: string;
   requestOptions: string;
   response?: string;
+}
+
+interface NativeApiErrorInfo {
+  error: Error;
+  type: string;
+  methodName: string;
+  params: any;
 }
 
 interface ListQuery extends AnyObject {
@@ -50,4 +60,11 @@ interface DailyItem {
   [propName: string]: any;
 }
 
-declare module 'vue-page-stack';
+interface SyncCalendarParams {
+  id: string;
+  title: string;
+  location: string;
+  startTime: number;
+  endTime: number;
+  alarm: number[];
+}
