@@ -13,7 +13,7 @@ function errorReport(
   response?: AnyObject
 ) {
   if (window.$sentry) {
-    const errorInfo: RequestErrorInfo = {
+    const errorInfo: ServerApiErrorInfo = {
       error: typeof error === 'string' ? new Error(error) : error,
       type: 'request',
       requestUrl: url,
