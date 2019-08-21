@@ -44,7 +44,8 @@ module.exports = {
       libraryExport: 'default'
     },
     externals: {
-      vue: 'Vue'
+      vue: 'Vue',
+      moment: 'moment'
     },
     plugins
   }
