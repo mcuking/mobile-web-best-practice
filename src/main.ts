@@ -6,6 +6,8 @@ import VuePageStack from 'vue-page-stack';
 import Report from './utils/report';
 import GlobalMethods from './utils/global-method';
 import initMockService from '@/mocks';
+import { initPlatform } from '@/utils/tools';
+import { Toast } from 'vant';
 
 const DSN = 'https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795';
 const IS_DEV = process.env.NODE_ENV === 'development';
@@ -30,10 +32,13 @@ if (!IS_DEV) {
   };
 }
 
+initPlatform();
+
 initMockService();
 
 Vue.config.productionTip = false;
 
+Vue.use(Toast);
 Vue.use(GlobalMethods);
 Vue.use(VuePageStack, { router });
 
