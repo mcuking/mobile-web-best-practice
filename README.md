@@ -16,6 +16,7 @@
 - [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
 - [阻止原生返回事件](#阻止原生返回事件)
+- [检测页面环境](#检测页面环境)
 - [样式适配](#样式适配)
 - [表单](#表单)
 - [打包策略](#打包策略)
@@ -60,7 +61,71 @@ vant 官方目前已经支持自定义样式主题，本项目也采用了该方
 
 开源社区中有很多功能强大的 JSBridge，例如上面列举的库。本项目基于保持 iOS android 平台接口统一原因，采用了 DSBridge，各位可以选择适合自己项目的工具。
 
-推荐一个笔者之前写的一个基于安卓平台实现的教学版 [JSBridge](https://github.com/mcuking/JSBridge)，里面详细阐述了如何基于底层接口一步步封装一个可用的 JSBridge：
+本项目以 h5 调用 native 提供的同步日历接口为例，演示如何在 dsbridge 基础上进行两端通信的。下面是两端的关键代码摘要：
+
+安卓端同步日历核心代码，具体代码请查看与本项目配套的安卓项目 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)：
+
+```java
+public class JsApi {
+    /**
+     * 同步日历接口
+     * msg 格式如下：
+     * ...
+     */
+    @JavascriptInterface
+    public void syncCalendar(Object msg, CompletionHandler<Integer> handler) {
+        try {
+            JSONObject obj = new JSONObject(msg.toString());
+            String id = obj.getString("id");
+            String title = obj.getString("title");
+            String location = obj.getString("location");
+            long startTime = obj.getLong("startTime");
+            long endTime = obj.getLong("endTime");
+            JSONArray earlyRemindTime = obj.getJSONArray("alarm");
+            String res = CalendarReminderUtils.addCalendarEvent(id, title, location, startTime, endTime, earlyRemindTime);
+            handler.complete(Integer.valueOf(res));
+        } catch (Exception e) {
+            e.printStackTrace();
+            handler.complete(6005);
+        }
+    }
+}
+```
+
+h5 端同步日历核心代码
+
+```ts
+class NativeMethods {
+  // 同步到日历
+  public syncCalendar(params: SyncCalendarParams) {
+    const cb = (errCode: number) => {
+      const msg = NATIVE_ERROR_CODE_MAP[errCode];
+
+      Vue.prototype.$toast(msg);
+
+      if (errCode !== 6000) {
+        this.errorReport(msg, 'syncCalendar', params);
+      }
+    };
+    dsbridge.call('syncCalendar', params, cb);
+  }
+
+  // 调用 native 接口出错向 sentry 发送错误信息
+  private errorReport(errorMsg: string, methodName: string, params: any) {
+    if (window.$sentry) {
+      const errorInfo: NativeApiErrorInfo = {
+        error: new Error(errorMsg),
+        type: 'callNative',
+        methodName,
+        params: JSON.stringify(params)
+      };
+      window.$sentry.log(errorInfo);
+    }
+  }
+}
+```
+
+另外推荐一个笔者之前写的一个基于安卓平台实现的教学版 [JSBridge](https://github.com/mcuking/JSBridge)，里面详细阐述了如何基于底层接口一步步封装一个可用的 JSBridge：
 
 [JSBridge 实现原理](https://github.com/mcuking/JSBridge)
 
@@ -181,6 +246,40 @@ export default class Form extends Vue {
   }
 }
 </script>
+```
+
+## 检测页面环境
+
+在开发 h5 开发时，可能会遇到下面两个情况：
+开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
+有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理。
+
+所以需要一种方式来检测页面当前环境，目前比较靠谱的方式是通过 android / ios webview 修改 useragent，在原有的基础上加上特定后缀，然后在网页就可以通过 ua 进行区分了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例核心代码如下：
+
+安卓关键代码：
+
+```java
+// Activity -> onCreate
+...
+webSettings = this.webview.getSettings();
+webSettings.setUserAgentString(
+  webSettings.getUserAgentString() + " " + getString(R.string.user_agent_suffix)
+);
+
+// Res -> Values -> strings.xml
+<string name="user_agent_suffix">MWBPContainer/android</string>
+```
+
+h5 关键代码：
+
+```ts
+const initPlatform = () => {
+  window.$platform = /MWBPContainer\/android+/.test(navigator.userAgent)
+    ? 'android'
+    : /MWBPContainer\/ios+/.test(navigator.userAgent)
+    ? 'ios'
+    : 'browser';
+};
 ```
 
 ## 样式适配
@@ -377,7 +476,7 @@ window.addEventListener(
 );
 ```
 
-关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数。核心代码如下：
+关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数（native 接口的错误上报类似，可在项目中查看）。核心代码如下：
 
 ```ts
 function errorReport(
