@@ -2,9 +2,11 @@ const webpack = require('webpack');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEV = NODE_ENV === 'development';
 const SentryPlugin = require('@sentry/webpack-plugin');
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const version = require('./package.json').version;
 
 const plugins = [
+  new LodashModuleReplacementPlugin(),
   new webpack.DefinePlugin({
     __VERSION__: JSON.stringify(version)
   })

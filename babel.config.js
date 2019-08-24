@@ -2,12 +2,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEV = NODE_ENV === 'development';
 
 const plugins = [
+  ['lodash'],
   [
     'import',
     {
       libraryName: 'vant',
       libraryDirectory: 'es',
-      style: name => `${name}/style/less`
+      style: (name) => `${name}/style/less`
     },
     'vant'
   ]
