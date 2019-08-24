@@ -28,7 +28,9 @@ class ValidatorUtils {
     });
   }
 
-  public validate(dataKey?: string | string[]): Promise<any> {
+  public validate(
+    dataKey?: string | string[]
+  ): Promise<ValidateError[] | string | string[] | undefined> {
     // 错误数组
     const err: ValidateError[] = [];
 
