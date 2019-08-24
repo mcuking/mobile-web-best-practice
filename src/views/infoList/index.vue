@@ -24,6 +24,8 @@ import { Component, Vue } from 'vue-property-decorator';
 import { NavBar, List, Cell } from 'vant';
 import daily from '@/services/daily';
 
+import { DailyItem } from '@/types';
+
 Vue.use(NavBar)
   .use(List)
   .use(Cell);

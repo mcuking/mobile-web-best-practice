@@ -2,6 +2,8 @@ import Vue from 'vue';
 import dsbridge from 'dsbridge';
 import NATIVE_ERROR_CODE_MAP from './native-error-code';
 
+import { NativeApiErrorInfo, SyncCalendarParams } from '@/types';
+
 class NativeMethods {
   // 同步到日历
   public syncCalendar(params: SyncCalendarParams) {

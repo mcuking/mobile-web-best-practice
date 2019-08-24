@@ -1,5 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
+import { ServerApiErrorInfo } from '@/types';
+
 interface ResponseData<T> {
   data: T;
   errmsg: string;
