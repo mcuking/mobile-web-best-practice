@@ -69,6 +69,9 @@ import {
   DatetimePicker
 } from 'vant';
 import moment from 'moment';
+import ValidatorUtils from '@/utils/validate';
+
+import { ValidateError } from '@/types';
 
 Vue.use(Cell)
   .use(Field)
@@ -81,6 +84,8 @@ Vue.use(Cell)
 
 @Component
 export default class Form extends Vue {
+  private validator!: ValidatorUtils;
+
   private showSectsPicker = false;
 
   private showDatePicker = false;
@@ -130,7 +135,14 @@ export default class Form extends Vue {
   }
 
   private onSubmit() {
-    this.$router.push({ name: 'info-list' });
+    this.validator
+      .validate()
+      .then(() => {
+        this.$router.push({ name: 'info-list' });
+      })
+      .catch((errors: ValidateError[]) => {
+        this.$toast(errors[0].message);
+      });
   }
 
   private goToSelect(popupName: string) {
@@ -162,6 +174,13 @@ export default class Form extends Vue {
         this.showSectsPicker = false;
         break;
     }
+  }
+
+  private created() {
+    this.validator = new ValidatorUtils({
+      rules: this.rules,
+      data: this.formData
+    });
   }
 }
 </script>

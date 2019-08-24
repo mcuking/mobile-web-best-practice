@@ -81,7 +81,7 @@ export default class Entry extends Vue {
 }
 </script>
 <style lang="less" scoped>
-@import '../../less/mixins/bg-image.less';
+@import '~@/less/mixins/bg-image.less';
 
 .layout__body {
   display: flex;
