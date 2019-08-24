@@ -59,7 +59,9 @@ class Report {
           return false;
         }
         // 上报资源地址
-        const url = (target as any).src || (target as any).href;
+        const url =
+          (target as HTMLScriptElement | HTMLImageElement).src ||
+          (target as HTMLLinkElement).href;
 
         this.log({
           error: new Error(`ResourceLoadError: ${url}`),
