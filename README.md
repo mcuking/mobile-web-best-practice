@@ -18,9 +18,9 @@
 - [阻止原生返回事件](#阻止原生返回事件)
 - [检测页面环境](#检测页面环境)
 - [样式适配](#样式适配)
-- [表单](#表单)
+- [表单校验](#表单校验)
 - [打包策略](#打包策略)
-- [微前端](#微前端)
+- [微前端应用](#微前端应用)
 - [领域驱动设计应用](#领域驱动设计应用)
 - [mock 数据](#mock-数据)
 - [调试控制台](#调试控制台)
@@ -338,17 +338,86 @@ last 2 versions // 每个浏览器最近的两个版本
 
 [如何在 Vue 项目中使用 vw 实现移动端适配](https://www.jianshu.com/p/1f1b23f8348f)
 
-## 表单
+## 表单校验
 
 [async-validator](https://github.com/yiminghe/async-validator)
 
-todo
+[vee-validate](https://github.com/baianat/vee-validate)
+
+由于大部分移动端组件库都不提供表单校验，因此需要自己封装。目前比较多的方式就是基于 async-validator 进行二次封装（elementUI 组件库提供的表单校验也是基于 async-validator ），或者使用 vee-validate（一种基于 vue 模板的轻量级校验框架）进行校验，各位可根据项目需求选择不同的方案。
+
+本项目的表单校验方案是在 async-validator 基础上进行二次封装，代码如下，原理很简单，基本满足需求。如果还有更完善的方案，欢迎提出来。
+
+其中 setRules 方法是将组件中设置的 rules（符合 async-validator 约定的校验规则）按照需要校验的数据的名字为 key 转化一个对象 validator，value 是 async-validator 生成的实例。validator 方法可以接收单个或多个需要校验的数据的 key，然后就会在 setRules 生成的对象 validator 中寻找 key 对应的 async-validator 实例，最后调用实例的校验方法。当然也可以不接受参数，那么就会校验所有传入的数据。
+
+```ts
+import schema from 'async-validator';
+...
+
+class ValidatorUtils {
+  private data: AnyObject;
+  private validators: AnyObject;
+
+  constructor({ rules = {}, data = {}, cover = true }) {
+    this.validators = {};
+    this.data = data;
+    this.setRules(rules, cover);
+  }
+
+  /**
+   * 设置校验规则
+   * @param rules async-validator 的校验规则
+   * @param cover 是否替换旧规则
+   */
+  public setRules(rules: ValidateRules, cover: boolean) {
+    if (cover) {
+      this.validators = {};
+    }
+
+    Object.keys(rules).forEach((key) => {
+      this.validators[key] = new schema({ [key]: rules[key] });
+    });
+  }
+
+  public validate(dataKey?: string | string[]): Promise<any> {
+    // 错误数组
+    const err: ValidateError[] = [];
+
+    Object.keys(this.validators)
+      .filter((key) => {
+        // 若不传 dataKey 则校验全部。否则校验 dataKey 对应的数据（dataKey 可以对应一个（字符串）或多个（数组））
+        return (
+          !dataKey ||
+          (dataKey &&
+            ((_.isString(dataKey) && dataKey === key) ||
+              (_.isArray(dataKey) && dataKey.includes(key))))
+        );
+      })
+      .forEach((key) => {
+        this.validators[key].validate(
+          { [key]: this.data[key] },
+          (error: ValidateError[]) => {
+            if (error) {
+              err.push(error[0]);
+            }
+          }
+        );
+      });
+
+    if (err.length > 0) {
+      return Promise.reject(err);
+    } else {
+      return Promise.resolve(dataKey);
+    }
+  }
+}
+```
 
 ## 打包策略
 
 todo
 
-## 微前端
+## 微前端应用
 
 [qiankun](https://github.com/umijs/qiankun)
 
