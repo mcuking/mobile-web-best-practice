@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/browser';
 import * as Integrations from '@sentry/integrations';
 
+import { UserInfo, ReportOptions } from '@/types';
+
 class Report {
-  /**
-   * 单例模式
-   */
+  // 单例模式
   public static getInstance(Vue: AnyObject, options: ReportOptions) {
     if (!this.instance) {
       this.instance = new Report(Vue, options);
@@ -13,6 +13,7 @@ class Report {
     }
     return this.instance;
   }
+
   private static instance: Report;
 
   public Vue: AnyObject;
@@ -23,9 +24,7 @@ class Report {
     this.options = options;
   }
 
-  /**
-   * 初始化
-   */
+  // 初始化
   public install() {
     Sentry.init({
       dsn: this.options.dsn,

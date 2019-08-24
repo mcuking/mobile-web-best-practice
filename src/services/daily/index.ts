@@ -1,6 +1,8 @@
 import http from '../http';
 import m from '@/utils/m';
 
+import { DailyItem } from '@/types';
+
 class Home {
   @m({ maxAge: 60 * 1000 })
   public async getUnderlingDailyList(

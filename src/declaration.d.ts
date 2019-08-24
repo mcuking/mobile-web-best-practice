@@ -2,69 +2,20 @@ declare const __VERSION__: string;
 
 declare module 'vue-page-stack';
 
-interface AnyObject {
-  [propName: string]: any;
-}
+declare module 'async-validator';
 
-interface DateObject {
-  year: string;
-  month: string;
-  day: string;
-}
+type Platform = 'browser' | 'android' | 'ios';
 
 interface Window {
   $sentry: AnyObject;
-  $platform: string;
+  $platform: Platform;
 }
 
-interface ReportOptions {
-  dsn: string;
-  release: string;
-  environment: string;
-}
-
-interface UserInfo {
-  username: string;
-  userid?: string;
-}
-
-interface ServerApiErrorInfo {
-  error: Error;
-  type: string;
-  requestUrl: string;
-  requestOptions: string;
-  response?: string;
-}
-
-interface NativeApiErrorInfo {
-  error: Error;
-  type: string;
-  methodName: string;
-  params: any;
+interface AnyObject {
+  [propName: string]: any;
 }
 
 interface ListQuery extends AnyObject {
   page: number;
   count: number;
-}
-
-interface DailyItem {
-  dailyId?: string;
-  today?: string | null;
-  tomorrow?: string | null;
-  goal?: string | null;
-  userName?: string;
-  create?: number;
-  update?: number;
-
-  [propName: string]: any;
-}
-
-interface SyncCalendarParams {
-  id: string;
-  title: string;
-  location: string;
-  startTime: number;
-  endTime: number;
-  alarm: number[];
 }
