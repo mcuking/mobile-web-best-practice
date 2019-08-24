@@ -16,23 +16,28 @@
                    clearable
                    label="会啥绝招"
                    placeholder="请输入绝招" />
-        <van-cell title="几时入坑"
-                  is-link
-                  :value="textData.pitDateStr"
-                  @click="goToSelect('calendar')" />
         <van-cell title="何方门派"
                   is-link
                   :value="textData.sectStr"
                   @click="goToSelect('sect')" />
+        <van-cell title="几时入坑"
+                  is-link
+                  :value="textData.pitDateStr"
+                  @click="goToSelect('pitDate')" />
       </van-cell-group>
     </div>
-    <van-popup v-model="showCalendar"
-               position="right"
-               :style="{ height: '100%', width: '100%' }">
-      <Calendar title="选择入坑时间"
-                @select="onSelectPitDate" />
+    <van-popup v-model="showDatePicker"
+               @click-overlay="onGoBack"
+               position="bottom">
+      <van-datetime-picker v-model="formData.pitDate"
+                           type="date"
+                           title="入坑时间"
+                           :max-date="new Date()"
+                           :formatter="formatterDate"
+                           @cancel="onGoBack"
+                           @confirm="onSelectPitDate" />
     </van-popup>
-    <van-popup v-model="showSects"
+    <van-popup v-model="showSectsPicker"
                @click-overlay="onGoBack"
                position="bottom">
       <van-picker show-toolbar
@@ -53,8 +58,17 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Cell, Field, CellGroup, Button, NavBar, Popup, Picker } from 'vant';
-import Calendar from '@/components/calendar/index.vue';
+import {
+  Cell,
+  Field,
+  CellGroup,
+  Button,
+  NavBar,
+  Popup,
+  Picker,
+  DatetimePicker
+} from 'vant';
+import moment from 'moment';
 
 Vue.use(Cell)
   .use(Field)
@@ -62,31 +76,54 @@ Vue.use(Cell)
   .use(Button)
   .use(NavBar)
   .use(Popup)
-  .use(Picker);
+  .use(Picker)
+  .use(DatetimePicker);
 
-@Component({
-  components: {
-    Calendar
-  }
-})
+@Component
 export default class Form extends Vue {
-  private showCalendar = false;
+  private showSectsPicker = false;
 
-  private showSects = false;
+  private showDatePicker = false;
 
   private sects = ['武当派', '少林派', '峨嵋派', '华山派', '丐帮'];
 
   private formData = {
     name: '',
     skill: '',
-    pitDate: '',
-    sect: ''
+    sect: '',
+    pitDate: new Date()
   };
 
   private textData = {
-    pitDateStr: '',
-    sectStr: ''
+    sectStr: '',
+    pitDateStr: ''
   };
+
+  private rules = {
+    name: [
+      { required: true, message: '请输入大名' },
+      { max: 10, message: '大名不能超过10个字哦～' }
+    ],
+    skill: [
+      { required: true, message: '请输入绝招' },
+      { max: 10, message: '绝招不能超过10个字哦～' }
+    ],
+    sect: [{ required: true, message: '请选择门派' }],
+    pitDate: [{ required: true, message: '请选择入坑时间' }]
+  };
+
+  private formatterDate(type: string, value: string) {
+    switch (type) {
+      case 'year':
+        return `${value}年`;
+      case 'month':
+        return `${value}月`;
+      case 'day':
+        return `${value}日`;
+      default:
+        return value;
+    }
+  }
 
   private onGoBack() {
     this.$router.go(-1);
@@ -100,32 +137,29 @@ export default class Form extends Vue {
     this.$router.push({ name: 'form', query: { [popupName]: 'true' } });
   }
 
-  private onSelectPitDate(...res: DateObject[]) {
-    this.formData.pitDate = `${res[0].year}-${res[0].month}-${res[0].day}`;
-    this.textData.pitDateStr = `${res[0].year}年${res[0].month}月${res[0].day}日`;
-    setTimeout(() => {
-      this.onGoBack();
-    }, 100);
+  private onSelectPitDate(pitDate: Date) {
+    this.textData.pitDateStr = moment(pitDate).format('YYYY年MM月DD日');
+    this.onGoBack();
   }
 
-  private onSelectSect(sect: any) {
+  private onSelectSect(sect: string) {
     this.formData.sect = sect;
     this.textData.sectStr = sect;
     this.onGoBack();
   }
 
   @Watch('$route.query')
-  private handlePopup(val: any) {
+  private handlePopup(val: AnyObject) {
     switch (true) {
-      case val.calendar && val.calendar === 'true':
-        this.showCalendar = true;
-        break;
       case val.sect && val.sect === 'true':
-        this.showSects = true;
+        this.showSectsPicker = true;
+        break;
+      case val.pitDate && val.pitDate === 'true':
+        this.showDatePicker = true;
         break;
       default:
-        this.showCalendar = false;
-        this.showSects = false;
+        this.showDatePicker = false;
+        this.showSectsPicker = false;
         break;
     }
   }
