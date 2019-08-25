@@ -72,10 +72,6 @@ export default class Entry extends Vue {
   }
 
   private syncCalendar() {
-    if (window.$platform === 'browser') {
-      this.$toast('当前处在浏览器环境，无法调用 native 接口哦～');
-      return;
-    }
     nativeMethods.syncCalendar(this.meetingInfo);
   }
 }
