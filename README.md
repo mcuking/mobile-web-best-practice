@@ -92,11 +92,12 @@ public class JsApi {
 }
 ```
 
-h5 端同步日历核心代码
+h5 端同步日历核心代码（通过装饰器来限制调用接口的平台）
 
 ```ts
 class NativeMethods {
   // 同步到日历
+  @p()
   public syncCalendar(params: SyncCalendarParams) {
     const cb = (errCode: number) => {
       const msg = NATIVE_ERROR_CODE_MAP[errCode];
@@ -122,6 +123,24 @@ class NativeMethods {
       window.$sentry.log(errorInfo);
     }
   }
+}
+
+/**
+ * @param {platforms} - 接口限制的平台
+ * @return {Function} - 装饰器
+ */
+function p(platforms = ['android', 'ios']) {
+  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
+    if (!platforms.includes(window.$platform)) {
+      descriptor.value = () => {
+        return Vue.prototype.$toast(
+          `当前处在 ${window.$platform} 环境，无法调用接口哦`
+        );
+      };
+    }
+
+    return descriptor;
+  };
 }
 ```
 
