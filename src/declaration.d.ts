@@ -8,6 +8,8 @@ type Platform = 'browser' | 'android' | 'ios';
 
 interface Window {
   $sentry: AnyObject;
+  $appVersion: string | undefined;
+  $systemVersion: string | undefined;
   $platform: Platform;
 }
 
