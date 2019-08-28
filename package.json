@@ -1,10 +1,10 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "0.4.0",
+  "version": "0.5.5",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build && rm -rf dist/static/js/*.js.map",
+    "build": "vue-cli-service build && cd dist && cp index.html 404.html && rm -rf js/*.js.map ",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
   },

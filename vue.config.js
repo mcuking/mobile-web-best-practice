@@ -17,8 +17,8 @@ if (!IS_DEV) {
   // plugins.push(
   //   new SentryPlugin({
   //     release: version,
-  //     include: './dist/static/js',
-  //     urlPrefix: '~/static/js/',
+  //     include: './dist/js',
+  //     urlPrefix: '~/js/',
   //     ignore: ['node_modules']
   //   })
   // );
@@ -26,8 +26,7 @@ if (!IS_DEV) {
 
 module.exports = {
   outputDir: 'dist/',
-  assetsDir: 'static',
-  publicPath: './',
+  publicPath: IS_DEV ? '/' : './',
   productionSourceMap: !IS_DEV,
   css: {
     extract: false,
