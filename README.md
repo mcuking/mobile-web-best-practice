@@ -16,10 +16,14 @@
 - [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
 - [阻止原生返回事件](#阻止原生返回事件)
-- [检测页面环境](#检测页面环境)
+- [通过 UA 获取设备信息](#通过-ua-获取设备信息)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
-- [打包策略](#打包策略)
+- [构建时预渲染](#构建时预渲染)
+- [组件懒加载](#组件懒加载)
+- [Webpack](#webpack)
+  - [external](#external)
+  - [optimize](#optimize)
 - [微前端应用](#微前端应用)
 - [领域驱动设计应用](#领域驱动设计应用)
 - [mock 数据](#mock-数据)
@@ -267,37 +271,56 @@ export default class Form extends Vue {
 </script>
 ```
 
-## 检测页面环境
+## 通过 UA 获取设备信息
 
-在开发 h5 开发时，可能会遇到下面两个情况：
-开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
-有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理。
+在开发 h5 开发时，可能会遇到下面几种情况：
 
-所以需要一种方式来检测页面当前环境，目前比较靠谱的方式是通过 android / ios webview 修改 useragent，在原有的基础上加上特定后缀，然后在网页就可以通过 ua 进行区分了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例核心代码如下：
+1. 开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
+2. 有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理；
+3. 当 h5 版本已经更新，但是客户端版本并没有同步更新，那么如果之间的接口调用发生了改变，就会出现调用出错。
+
+所以需要一种方式来检测页面当前所处设备的平台类型、app 版本、系统版本等，目前比较靠谱的方式是通过 android / ios webview 修改 UserAgent，在原有的基础上加上特定后缀，然后在网页就可以通过 UA 获取设备相关信息了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例关键代码如下：
 
 安卓关键代码：
 
 ```java
 // Activity -> onCreate
 ...
-webSettings = this.webview.getSettings();
-webSettings.setUserAgentString(
-  webSettings.getUserAgentString() + " " + getString(R.string.user_agent_suffix)
-);
+// 获取 app 版本
+PackageManager packageManager = getPackageManager();
+PackageInfo packInfo = null;
+try {
+  // getPackageName()是你当前类的包名，0代表是获取版本信息
+  packInfo = packageManager.getPackageInfo(getPackageName(),0);
+} catch (PackageManager.NameNotFoundException e) {
+  e.printStackTrace();
+}
+String appVersion = packInfo.versionName;
 
-// Res -> Values -> strings.xml
-<string name="user_agent_suffix">MWBPContainer/android</string>
+// 获取系统版本
+String systemVersion = android.os.Build.VERSION.RELEASE;
+
+mWebSettings.setUserAgentString(
+  mWebSettings.getUserAgentString() + " DSBRIDGE_"  + appVersion + "_" + systemVersion + "_android"
+);
 ```
 
 h5 关键代码：
 
 ```ts
-const initPlatform = () => {
-  window.$platform = /MWBPContainer\/android+/.test(navigator.userAgent)
-    ? 'android'
-    : /MWBPContainer\/ios+/.test(navigator.userAgent)
-    ? 'ios'
-    : 'browser';
+const initDeviceInfo = () => {
+  const UA = navigator.userAgent;
+  const info = UA.match(/\s{1}DSBRIDGE[\w\.]+$/g);
+  if (info && info.length > 0) {
+    const infoArray = info[0].split('_');
+    window.$appVersion = infoArray[1];
+    window.$systemVersion = infoArray[2];
+    window.$platform = infoArray[3] as Platform;
+  } else {
+    window.$appVersion = undefined;
+    window.$systemVersion = undefined;
+    window.$platform = 'browser';
+  }
 };
 ```
 
@@ -434,9 +457,20 @@ class ValidatorUtils {
 }
 ```
 
-## 打包策略
+## 构建时预渲染
 
 todo
+
+## 组件懒加载
+
+todo
+
+## Webpack
+### external
+  todo
+### optimize
+  todo
+
 
 ## 微前端应用
 
@@ -658,7 +692,7 @@ document.body.appendChild(script);
 ```
 sentry-cli releases -o 机构名 -p 项目名 files 版本 upload-sourcemaps sourcemap 文件相对位置 --url-prefix js 在线上相对根目录的位置 --rewrite
 // 示例
-sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps dist/static/js --url-prefix '~/static/js/' --rewrite
+sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps dist/js --url-prefix '~/js/' --rewrite
 ```
 
 当然官方也提供了 webpack 插件 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)，当打包时触发 webpack 的 after-emit 事件钩子（即生成资源到 output 目录之后），插件会自动上传打包目录中的 sourcemap 和关联的 js，相关配置可参考本项目的 vue.config.js 文件。
