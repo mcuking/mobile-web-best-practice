@@ -1,10 +1,10 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "0.5.5",
+  "version": "0.5.8",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build && cd dist && cp index.html 404.html && rm -rf js/*.js.map ",
+    "build": "vue-cli-service build && rm -rf dist/js/*.js.map ",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
   },
@@ -48,6 +48,7 @@
     "lint-staged": "^8.1.5",
     "lodash-webpack-plugin": "^0.11.5",
     "postcss-px-to-viewport": "^1.1.1",
+    "prerender-spa-plugin": "^3.4.0",
     "typescript": "^3.4.3",
     "vue-template-compiler": "^2.6.10"
   },

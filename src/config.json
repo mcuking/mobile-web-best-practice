@@ -1,0 +1,9 @@
+{
+    "SentryEnabled": true,
+    "SentryDSN": "https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795",
+    "SentryPluginEnabled": false,
+
+    "VuePageStackEnabled": true,
+
+    "PreRenderEnabled": false
+}

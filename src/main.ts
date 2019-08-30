@@ -7,14 +7,14 @@ import Report from './utils/report';
 import GlobalMethods from './utils/global-method';
 import initMockService from '@/mocks';
 import { initPlatform } from '@/utils/tools';
+import LocalConfig from '@/config.json';
 import { Toast } from 'vant';
 
-const DSN = 'https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
-if (!IS_DEV) {
+if (LocalConfig.SentryEnabled && !IS_DEV) {
   const sentry = Report.getInstance(Vue, {
-    dsn: DSN,
+    dsn: LocalConfig.SentryDSN,
     release: __VERSION__, // from webpack DefinePlugin
     environment: 'Prod'
   });
@@ -40,10 +40,19 @@ Vue.config.productionTip = false;
 
 Vue.use(Toast);
 Vue.use(GlobalMethods);
-Vue.use(VuePageStack, { router });
+
+if (LocalConfig.VuePageStackEnabled) {
+  Vue.use(VuePageStack, { router });
+}
 
 new Vue({
   router,
   store,
-  render: (h) => h(App)
+  render: (h) => h(App),
+  mounted() {
+    if (LocalConfig.PreRenderEnabled) {
+      // 触发 renderAfterDocumentEvent
+      document.dispatchEvent(new Event('render-event'));
+    }
+  }
 }).$mount('#app');

@@ -1,10 +1,6 @@
 export default [
   {
     path: '/',
-    redirect: '/entry'
-  },
-  {
-    path: '/entry',
     name: 'entry',
     component: () => import('@/views/entry/index.vue')
   },
