@@ -4,10 +4,10 @@
 
 ## 在线体验
 
-| 体验平台 | 二维码                                    | 链接                                                            |
-| -------- | ----------------------------------------- | --------------------------------------------------------------- |
-| Web      | <img src="./mwbp.png" width=140>          | [点击体验](https://mcuking.github.io/mobile-web-best-practice/) |
-| Android  | <img src="./mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer)                 |
+| 体验平台 | 二维码                                           | 链接                                                            |
+| -------- | ------------------------------------------------ | --------------------------------------------------------------- |
+| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](https://mcuking.github.io/mobile-web-best-practice/) |
+| Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer)                 |
 
 ## 目录
 
@@ -15,17 +15,17 @@
 - [JSBridge](#jsbridge)
 - [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
-- [阻止原生返回事件](#阻止原生返回事件)
-- [通过 UA 获取设备信息](#通过-ua-获取设备信息)
-- [样式适配](#样式适配)
-- [表单校验](#表单校验)
 - [构建时预渲染](#构建时预渲染)
 - [组件懒加载](#组件懒加载)
 - [Webpack](#webpack)
   - [external](#external)
   - [optimize](#optimize)
-- [微前端应用](#微前端应用)
 - [领域驱动设计应用](#领域驱动设计应用)
+- [微前端应用](#微前端应用)
+- [样式适配](#样式适配)
+- [表单校验](#表单校验)
+- [阻止原生返回事件](#阻止原生返回事件)
+- [通过 UA 获取设备信息](#通过-ua-获取设备信息)
 - [mock 数据](#mock-数据)
 - [调试控制台](#调试控制台)
 - [抓包工具](#抓包工具)
@@ -167,7 +167,7 @@ function p(platforms = ['android', 'ios']) {
 
 而逻辑思维前端团队的 vue-stack-router 则另辟蹊径，抛开了 vue-router，自己独立实现了路由管理，相较于 vue-router，主要是支持同时可以存活 A 和 B 两个页面的实例，或者 A 页面不同状态的两个实例，并支持原生左滑功能。但由于项目还在初期完善，功能还没有 vue-router 强大，建议持续关注后续动态再做决定是否引入。
 
-本项目使用的是 vue-page-stack，各位可以选择适合自己项目的工具。同时推荐两片相关文章：
+本项目使用的是 vue-page-stack，各位可以选择适合自己项目的工具。同时推荐几篇相关文章：
 
 [【vue-page-stack】Vue 单页应用导航管理器 正式发布](https://juejin.im/post/5d2ef417f265da1b971aa94f)
 
@@ -219,6 +219,189 @@ class Home {
 }
 
 export default new Home();
+```
+
+## 构建时预渲染
+
+针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
+
+其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
+
+根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
+
+实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
+
+一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
+
+另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
+
+<img src="./assets/prerender-spa-plugin.png" width="1200"/>
+
+本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
+
+同时推荐几篇相关文章：
+
+[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
+
+[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
+
+## 组件懒加载
+
+todo
+
+## Webpack
+
+### external
+
+todo
+
+### optimize
+
+todo
+
+## 领域驱动设计应用
+
+[ddd-fe-demo](https://github.com/Vincedream/ddd-fe-demo)
+
+todo
+
+## 微前端应用
+
+[qiankun](https://github.com/umijs/qiankun)
+
+todo
+
+## 样式适配
+
+[postcss-px-to-viewport](https://github.com/evrone/postcss-px-to-viewport)
+
+[Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)
+
+[flexible](https://github.com/amfe/lib-flexible)
+
+[postcss-pxtorem](https://github.com/cuth/postcss-pxtorem)
+
+[Autoprefixer](https://github.com/postcss/autoprefixer)
+
+[browserslist](https://github.com/browserslist/browserslist)
+
+在移动端网页开发时，样式适配始终是一个绕不开的问题。对此目前主流方案有 vw 和 rem（当然还有 vw + rem 结合方案，请见下方 rem-vw-layout 仓库），其实基本原理都是相通的，就是随着屏幕宽度或字体大小成正比变化。因为原理方面的详细资料网络上已经有很多了，就不在这里赘述了。下面主要提供一些这工程方面的工具。
+
+关于 rem，阿里无线前端团队在 15 年的时候基于 rem 推出了 flexible 方案，以及 postcss 提供的自动转换 px 到 rem 的插件 postcss-pxtorem。
+
+关于 vw，可以使用 postcss-px-to-viewport 进行自动转换 px 到 vw。postcss-px-to-viewport 相关配置如下：
+
+```js
+"postcss-px-to-viewport": {
+  viewportWidth: 375, // 视窗的宽度，对应的是我们设计稿的宽度，一般是375
+  viewportHeight: 667, // 视窗的高度，根据750设备的宽度来指定，一般指定1334，也可以不配置
+  unitPrecision: 3,  // 指定`px`转换为视窗单位值的小数位数（很多时候无法整除）
+  viewportUnit: 'vw', // 指定需要转换成的视窗单位，建议使用vw
+  selectorBlackList: ['.ignore', '.hairlines'], // 指定不转换为视窗单位的类，可以自定义，可以无限添加,建议定义一至两个通用的类名
+  minPixelValue: 1, // 小于或等于`1px`不转换为视窗单位，你也可以设置为你想要的值
+  mediaQuery: false // 媒体查询里的单位是否需要转换单位
+}
+```
+
+下面是 vw 和 rem 的优缺点对比图：
+
+<img src="./assets/vw-rem.png" width="1200"/>
+
+关于 vw 兼容性问题，目前在移动端 iOS 8 以上以及 Android 4.4 以上获得支持。如果有兼容更低版本需求的话，可以选择 viewport 的 pollify 方案，其中比较主流的是 [Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)。
+
+本方案因不准备兼容低版本，所以直接选择了 vw 方案，各位可根据项目需求选择不同的方案。
+
+另外关于设置 css 兼容不同浏览器，想必大家都知道 Autoprefixer（vue-cli3 已经默认集成了），那么如何设置要兼容的范围呢？推荐使用 browserslist，可以在 .browserslistrc 或者 pacakage.json 中 browserslist 部分设置兼容浏览器范围。因为不止 Autoprefixer，还有 Babel，postcss-preset-env 等工具都会读取 browserslist 的兼容配置，这样比较容易使 js css 兼容浏览器的范围保持一致。下面是本项目的 .browserslistrc 配置：
+
+```js
+iOS >= 10  //  即 iOS Safari
+Android >= 6.0 // 即 Android WebView
+last 2 versions // 每个浏览器最近的两个版本
+```
+
+最后推荐一些移动端样式适配的资料：
+
+[rem-vw-layout](https://github.com/imwtr/rem-vw-layout)
+
+[细说移动端 经典的 REM 布局 与 新秀 VW 布局](https://www.cnblogs.com/imwtr/p/9648233.html)
+
+[如何在 Vue 项目中使用 vw 实现移动端适配](https://www.jianshu.com/p/1f1b23f8348f)
+
+## 表单校验
+
+[async-validator](https://github.com/yiminghe/async-validator)
+
+[vee-validate](https://github.com/baianat/vee-validate)
+
+由于大部分移动端组件库都不提供表单校验，因此需要自己封装。目前比较多的方式就是基于 async-validator 进行二次封装（elementUI 组件库提供的表单校验也是基于 async-validator ），或者使用 vee-validate（一种基于 vue 模板的轻量级校验框架）进行校验，各位可根据项目需求选择不同的方案。
+
+本项目的表单校验方案是在 async-validator 基础上进行二次封装，代码如下，原理很简单，基本满足需求。如果还有更完善的方案，欢迎提出来。
+
+其中 setRules 方法是将组件中设置的 rules（符合 async-validator 约定的校验规则）按照需要校验的数据的名字为 key 转化一个对象 validator，value 是 async-validator 生成的实例。validator 方法可以接收单个或多个需要校验的数据的 key，然后就会在 setRules 生成的对象 validator 中寻找 key 对应的 async-validator 实例，最后调用实例的校验方法。当然也可以不接受参数，那么就会校验所有传入的数据。
+
+```ts
+import schema from 'async-validator';
+...
+
+class ValidatorUtils {
+  private data: AnyObject;
+  private validators: AnyObject;
+
+  constructor({ rules = {}, data = {}, cover = true }) {
+    this.validators = {};
+    this.data = data;
+    this.setRules(rules, cover);
+  }
+
+  /**
+   * 设置校验规则
+   * @param rules async-validator 的校验规则
+   * @param cover 是否替换旧规则
+   */
+  public setRules(rules: ValidateRules, cover: boolean) {
+    if (cover) {
+      this.validators = {};
+    }
+
+    Object.keys(rules).forEach((key) => {
+      this.validators[key] = new schema({ [key]: rules[key] });
+    });
+  }
+
+  public validate(
+    dataKey?: string | string[]
+  ): Promise<ValidateError[] | string | string[] | undefined> {
+    // 错误数组
+    const err: ValidateError[] = [];
+
+    Object.keys(this.validators)
+      .filter((key) => {
+        // 若不传 dataKey 则校验全部。否则校验 dataKey 对应的数据（dataKey 可以对应一个（字符串）或多个（数组））
+        return (
+          !dataKey ||
+          (dataKey &&
+            ((_.isString(dataKey) && dataKey === key) ||
+              (_.isArray(dataKey) && dataKey.includes(key))))
+        );
+      })
+      .forEach((key) => {
+        this.validators[key].validate(
+          { [key]: this.data[key] },
+          (error: ValidateError[]) => {
+            if (error) {
+              err.push(error[0]);
+            }
+          }
+        );
+      });
+
+    if (err.length > 0) {
+      return Promise.reject(err);
+    } else {
+      return Promise.resolve(dataKey);
+    }
+  }
+}
 ```
 
 ## 阻止原生返回事件
@@ -323,166 +506,6 @@ const initDeviceInfo = () => {
   }
 };
 ```
-
-## 样式适配
-
-[postcss-px-to-viewport](https://github.com/evrone/postcss-px-to-viewport)
-
-[Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)
-
-[flexible](https://github.com/amfe/lib-flexible)
-
-[postcss-pxtorem](https://github.com/cuth/postcss-pxtorem)
-
-[Autoprefixer](https://github.com/postcss/autoprefixer)
-
-[browserslist](https://github.com/browserslist/browserslist)
-
-在移动端网页开发时，样式适配始终是一个绕不开的问题。对此目前主流方案有 vw 和 rem（当然还有 vw + rem 结合方案，请见下方 rem-vw-layout 仓库），其实基本原理都是相通的，就是随着屏幕宽度或字体大小成正比变化。因为原理方面的详细资料网络上已经有很多了，就不在这里赘述了。下面主要提供一些这工程方面的工具。
-
-关于 rem，阿里无线前端团队在 15 年的时候基于 rem 推出了 flexible 方案，以及 postcss 提供的自动转换 px 到 rem 的插件 postcss-pxtorem。
-
-关于 vw，可以使用 postcss-px-to-viewport 进行自动转换 px 到 vw。postcss-px-to-viewport 相关配置如下：
-
-```js
-"postcss-px-to-viewport": {
-  viewportWidth: 375, // 视窗的宽度，对应的是我们设计稿的宽度，一般是375
-  viewportHeight: 667, // 视窗的高度，根据750设备的宽度来指定，一般指定1334，也可以不配置
-  unitPrecision: 3,  // 指定`px`转换为视窗单位值的小数位数（很多时候无法整除）
-  viewportUnit: 'vw', // 指定需要转换成的视窗单位，建议使用vw
-  selectorBlackList: ['.ignore', '.hairlines'], // 指定不转换为视窗单位的类，可以自定义，可以无限添加,建议定义一至两个通用的类名
-  minPixelValue: 1, // 小于或等于`1px`不转换为视窗单位，你也可以设置为你想要的值
-  mediaQuery: false // 媒体查询里的单位是否需要转换单位
-}
-```
-
-下面是 vw 和 rem 的优缺点对比图：
-
-<img src="./vw-rem.png" width="1200"/>
-
-关于 vw 兼容性问题，目前在移动端 iOS 8 以上以及 Android 4.4 以上获得支持。如果有兼容更低版本需求的话，可以选择 viewport 的 pollify 方案，其中比较主流的是 [Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)。
-
-本方案因不准备兼容低版本，所以直接选择了 vw 方案，各位可根据项目需求选择不同的方案。
-
-另外关于设置 css 兼容不同浏览器，想必大家都知道 Autoprefixer（vue-cli3 已经默认集成了），那么如何设置要兼容的范围呢？推荐使用 browserslist，可以在 .browserslistrc 或者 pacakage.json 中 browserslist 部分设置兼容浏览器范围。因为不止 Autoprefixer，还有 Babel，postcss-preset-env 等工具都会读取 browserslist 的兼容配置，这样比较容易使 js css 兼容浏览器的范围保持一致。下面是本项目的 .browserslistrc 配置：
-
-```js
-iOS >= 10  //  即 iOS Safari
-Android >= 6.0 // 即 Android WebView
-last 2 versions // 每个浏览器最近的两个版本
-```
-
-最后推荐一些移动端样式适配的资料：
-
-[rem-vw-layout](https://github.com/imwtr/rem-vw-layout)
-
-[细说移动端 经典的 REM 布局 与 新秀 VW 布局](https://www.cnblogs.com/imwtr/p/9648233.html)
-
-[如何在 Vue 项目中使用 vw 实现移动端适配](https://www.jianshu.com/p/1f1b23f8348f)
-
-## 表单校验
-
-[async-validator](https://github.com/yiminghe/async-validator)
-
-[vee-validate](https://github.com/baianat/vee-validate)
-
-由于大部分移动端组件库都不提供表单校验，因此需要自己封装。目前比较多的方式就是基于 async-validator 进行二次封装（elementUI 组件库提供的表单校验也是基于 async-validator ），或者使用 vee-validate（一种基于 vue 模板的轻量级校验框架）进行校验，各位可根据项目需求选择不同的方案。
-
-本项目的表单校验方案是在 async-validator 基础上进行二次封装，代码如下，原理很简单，基本满足需求。如果还有更完善的方案，欢迎提出来。
-
-其中 setRules 方法是将组件中设置的 rules（符合 async-validator 约定的校验规则）按照需要校验的数据的名字为 key 转化一个对象 validator，value 是 async-validator 生成的实例。validator 方法可以接收单个或多个需要校验的数据的 key，然后就会在 setRules 生成的对象 validator 中寻找 key 对应的 async-validator 实例，最后调用实例的校验方法。当然也可以不接受参数，那么就会校验所有传入的数据。
-
-```ts
-import schema from 'async-validator';
-...
-
-class ValidatorUtils {
-  private data: AnyObject;
-  private validators: AnyObject;
-
-  constructor({ rules = {}, data = {}, cover = true }) {
-    this.validators = {};
-    this.data = data;
-    this.setRules(rules, cover);
-  }
-
-  /**
-   * 设置校验规则
-   * @param rules async-validator 的校验规则
-   * @param cover 是否替换旧规则
-   */
-  public setRules(rules: ValidateRules, cover: boolean) {
-    if (cover) {
-      this.validators = {};
-    }
-
-    Object.keys(rules).forEach((key) => {
-      this.validators[key] = new schema({ [key]: rules[key] });
-    });
-  }
-
-  public validate(
-    dataKey?: string | string[]
-  ): Promise<ValidateError[] | string | string[] | undefined> {
-    // 错误数组
-    const err: ValidateError[] = [];
-
-    Object.keys(this.validators)
-      .filter((key) => {
-        // 若不传 dataKey 则校验全部。否则校验 dataKey 对应的数据（dataKey 可以对应一个（字符串）或多个（数组））
-        return (
-          !dataKey ||
-          (dataKey &&
-            ((_.isString(dataKey) && dataKey === key) ||
-              (_.isArray(dataKey) && dataKey.includes(key))))
-        );
-      })
-      .forEach((key) => {
-        this.validators[key].validate(
-          { [key]: this.data[key] },
-          (error: ValidateError[]) => {
-            if (error) {
-              err.push(error[0]);
-            }
-          }
-        );
-      });
-
-    if (err.length > 0) {
-      return Promise.reject(err);
-    } else {
-      return Promise.resolve(dataKey);
-    }
-  }
-}
-```
-
-## 构建时预渲染
-
-todo
-
-## 组件懒加载
-
-todo
-
-## Webpack
-### external
-  todo
-### optimize
-  todo
-
-
-## 微前端应用
-
-[qiankun](https://github.com/umijs/qiankun)
-
-todo
-
-## 领域驱动设计应用
-
-[ddd-fe-demo](https://github.com/Vincedream/ddd-fe-demo)
-
-todo
 
 ## mock 数据
 
