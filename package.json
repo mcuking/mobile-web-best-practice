@@ -1,17 +1,16 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "0.5.8",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build && rm -rf dist/js/*.js.map ",
+    "build": "vue-cli-service build && rm -rf dist/js/*.js.map",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
-    "@sentry/browser": "^5.6.1",
+    "@sentry/browser": "^5.6.3",
     "@sentry/integrations": "^5.6.1",
-    "@types/mockjs": "^1.0.2",
     "async-validator": "^3.0.4",
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
@@ -33,6 +32,7 @@
     "@types/chai": "^4.1.0",
     "@types/lodash": "^4.14.137",
     "@types/mocha": "^5.2.4",
+    "@types/mockjs": "^1.0.2",
     "@vue/cli-plugin-babel": "^3.10.0",
     "@vue/cli-plugin-typescript": "^3.10.0",
     "@vue/cli-plugin-unit-mocha": "^3.10.0",

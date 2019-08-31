@@ -60,8 +60,12 @@ module.exports = {
       return {
         plugins: [...commonPlugins, ...productionPlugins],
         externals: {
+          // key 是给 import 的时候用的，value 表示的是如何在 global 中访问到该对象
           vue: 'Vue',
-          moment: 'moment'
+          vuex: 'Vuex',
+          'vue-router': 'VueRouter',
+          mockjs: 'Mock',
+          moment: 'moment',
         }
       }
     } else {
@@ -69,5 +73,9 @@ module.exports = {
         plugins: [...commonPlugins],
       }
     }
-  }
+  },
+  devServer: {
+    port: 8080, //配置端口
+    open: true, //自动开启浏览器
+  },
 };
