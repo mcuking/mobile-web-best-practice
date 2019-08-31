@@ -16,10 +16,8 @@
 - [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
 - [构建时预渲染](#构建时预渲染)
-- [组件懒加载](#组件懒加载)
-- [Webpack](#webpack)
-  - [external](#external)
-  - [optimize](#optimize)
+- [Webpack 策略](#webpack-策略)
+  - [基础库抽离](#基础库抽离)
 - [领域驱动设计应用](#领域驱动设计应用)
 - [微前端应用](#微前端应用)
 - [样式适配](#样式适配)
@@ -245,19 +243,29 @@ export default new Home();
 
 [使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
 
-## 组件懒加载
+## Webpack 策略
 
-todo
+### 基础库抽离
 
-## Webpack
+对于一些基础库，例如 vue、moment 等，属于不经常变化的静态依赖，一般需要抽离出来以提升每次构建的效率。目前主流方案有两种：
 
-### external
+一种是使用 [webpack-dll-plugin](https://webpack.docschina.org/plugins/dll-plugin/) 插件，在首次构建时就讲这些静态依赖单独打包，后续只需引入早已打包好的静态依赖包即可；
 
-todo
+另一种就是外部扩展 [Externals](https://webpack.docschina.org/configuration/externals/) 方式，即把不需要打包的静态资源从构建中剔除，使用 CDN 方式引入。下面是 webpack-dll-plugin 相对 Externals 的缺点：
 
-### optimize
+1. 需要配置在每次构建时都不参与编译的静态依赖，并在首次构建时为它们预编译出一份 JS 文件（后文将称其为 lib 文件），每次更新依赖需要手动进行维护，一旦增删依赖或者变更资源版本忘记更新，就会出现 Error 或者版本错误。
 
-todo
+2. 无法接入浏览器的新特性 script type="module"，对于某些依赖库提供的原生 ES Modules 的引入方式（比如 vue 的新版引入方式）无法得到支持，没法更好地适配高版本浏览器提供的优良特性以实现更好地性能优化。
+
+3. 将所有资源预编译成一份文件，并将这份文件显式注入项目构建的 HTML 模板中，这样的做法，在 HTTP1 时代是被推崇的，因为那样能减少资源的请求数量，但在 HTTP2 时代如果拆成多个 CDN Link，就能够更充分地利用 HTTP2 的多路复用特性。
+
+不过选择 Externals 还是需要一个靠谱的 CDN 服务的。
+
+本项目选择的是 Externals，各位可根据项目需求选择不同的方案。
+
+更多内容请查看这篇文章（上面观点来自于这篇文章）：
+
+[Webpack优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
 ## 领域驱动设计应用
 
@@ -651,7 +659,7 @@ function errorReport(
 }
 ```
 
-关于全局 js 报错，sentry 针对的前端的 sdk -- @sentry/browser 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
+关于全局 js 报错，sentry 针对的前端的 sdk 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
 
 需要注意的是其中 window.onerror = (message, source, lineno, colno, error) =>{} 不同于 window.addEventListener('error', ...)，window.onerror 捕获的信息更丰富，包括了错误字符串信息、发生错误的 js 文件，错误所在的行数、列数、和 Error 对象（其中还会有调用堆栈信息等）。所以 sentry 会选择 window.onerror 进行 js 全局监控。
 
