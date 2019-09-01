@@ -1,5 +1,5 @@
 import schema from 'async-validator';
-import _ from 'lodash';
+import { isString, isArray } from 'lodash';
 
 import { ValidateRules, ValidateError } from '@/types';
 
@@ -40,8 +40,8 @@ class ValidatorUtils {
         return (
           !dataKey ||
           (dataKey &&
-            ((_.isString(dataKey) && dataKey === key) ||
-              (_.isArray(dataKey) && dataKey.includes(key))))
+            ((isString(dataKey) && dataKey === key) ||
+              (isArray(dataKey) && dataKey.includes(key))))
         );
       })
       .forEach((key) => {
