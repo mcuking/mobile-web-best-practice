@@ -66,6 +66,7 @@ module.exports = {
           'vue-router': 'VueRouter',
           mockjs: 'Mock',
           moment: 'moment',
+          hammerjs: 'Hammer'
         }
       }
     } else {

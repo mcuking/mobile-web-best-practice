@@ -8,6 +8,7 @@ import GlobalMethods from './utils/global-method';
 import initMockService from '@/mocks';
 import { initPlatform } from '@/utils/tools';
 import LocalConfig from '@/config.json';
+import Directives from '@/directives';
 import { Toast } from 'vant';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
@@ -40,6 +41,7 @@ Vue.config.productionTip = false;
 
 Vue.use(Toast);
 Vue.use(GlobalMethods);
+Vue.use(Directives);
 
 if (LocalConfig.VuePageStackEnabled) {
   Vue.use(VuePageStack, { router });

@@ -20,6 +20,7 @@
   - [基础库抽离](#基础库抽离)
 - [领域驱动设计应用](#领域驱动设计应用)
 - [微前端应用](#微前端应用)
+- [手势库](#手势库)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
 - [阻止原生返回事件](#阻止原生返回事件)
@@ -265,7 +266,7 @@ export default new Home();
 
 更多内容请查看这篇文章（上面观点来自于这篇文章）：
 
-[Webpack优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
+[Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
 ## 领域驱动设计应用
 
@@ -278,6 +279,78 @@ todo
 [qiankun](https://github.com/umijs/qiankun)
 
 todo
+
+## 手势库
+
+[hammer.js](https://github.com/hammerjs/hammer.js)
+
+[AlloyFinger](https://github.com/AlloyTeam/AlloyFinger)
+
+在移动端开发中，一般都需要支持一些手势，例如拖动（Pan）,缩放（Pinch）,旋转（Rotate）,滑动（swipe）等。目前已经有很成熟的方案了，例如 hammer.js 和腾讯前端团队开发的 AlloyFinger 都很不错。本项目选择基于 hammer.js 进行二次封装成 vue 指令集，各位可根据项目需求选择不同的方案。
+
+下面是二次封装的关键代码，其中用到了 webpack 的 require.context 函数来获取特定模块的上下文，主要用来实现自动化导入模块，比较适用于像 vue 指令这种模块较多的场景：
+
+```ts
+// 用于导入模块的上下文
+export const importAll = (
+  context: __WebpackModuleApi.RequireContext,
+  options: ImportAllOptions = {}
+): AnyObject => {
+  const { useDefault = true, keyTransformFunc, filterFunc } = options;
+
+  let keys = context.keys();
+
+  if (isFunction(filterFunc)) {
+    keys = keys.filter(filterFunc);
+  }
+
+  return keys.reduce((acc: AnyObject, curr: string) => {
+    const key = isFunction(keyTransformFunc) ? keyTransformFunc(curr) : curr;
+    acc[key] = useDefault ? context(curr).default : context(curr);
+    return acc;
+  }, {});
+};
+
+// directives 文件夹下的 index.ts
+const directvieContext = require.context('./', false, /\.ts$/);
+const directives = importAll(directvieContext, {
+  filterFunc: (key: string) => key !== './index.ts',
+  keyTransformFunc: (key: string) =>
+    key.replace(/^\.\//, '').replace(/\.ts$/, '')
+});
+
+export default {
+  install(vue: typeof Vue): void {
+    Object.keys(directives).forEach((key) =>
+      vue.directive(key, directives[key])
+    );
+  }
+};
+
+// touch.ts
+export default {
+  bind(el: HTMLElement, binding: DirectiveBinding) {
+    const hammer: HammerManager = new Hammer(el);
+    const touch = binding.arg as Touch;
+    const listener = binding.value as HammerListener;
+    const modifiers = Object.keys(binding.modifiers);
+
+    switch (touch) {
+      case Touch.Pan:
+        const panEvent = detectPanEvent(modifiers);
+        hammer.on(`pan${panEvent}`, listener);
+        break;
+      ...
+    }
+  }
+};
+```
+
+另外推荐一篇关于 hammer.js 和一篇关于 require.context 的文章：
+
+[H5 案例分享：JS 手势框架 —— Hammer.js](https://www.h5anli.com/articles/201609/hammerjs.html)
+
+[使用 require.context 实现前端工程自动化](https://www.jianshu.com/p/c894ea00dfec)
 
 ## 样式适配
 
