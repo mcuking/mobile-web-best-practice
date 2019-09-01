@@ -45,13 +45,11 @@
                   @cancel="onGoBack"
                   @confirm="onSelectSect" />
     </van-popup>
-    <div class="form__button--submit"
+    <div class="bottom-button--submit"
          id="fixed-bottom">
       <van-button type="primary"
                   size="large"
-                  @click="onSubmit">
-        提交
-      </van-button>
+                  @click="onSubmit">提交</van-button>
     </div>
   </div>
 </template>
@@ -184,13 +182,4 @@ export default class Form extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
-.form__button--submit {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  padding: 10px 16px;
-}
-</style>
+<style lang="less" scoped></style>
