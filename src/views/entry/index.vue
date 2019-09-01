@@ -21,14 +21,10 @@
         <van-button type="primary"
                     class="entry__button--apply"
                     size="large"
-                    @click="gotoSignUp">
-          报名参加
-        </van-button>
+                    @click="goToMask">报名参加</van-button>
         <van-button type="default"
                     size="large"
-                    @click="syncCalendar">
-          同步日程到日历
-        </van-button>
+                    @click="syncCalendar">同步日程到日历</van-button>
       </div>
     </div>
   </div>
@@ -67,8 +63,8 @@ export default class Entry extends Vue {
     .add(2, 'hour')
     .format('YYYY年MM月DD日 HH时mm分');
 
-  private gotoSignUp() {
-    this.$router.push({ name: 'form' });
+  private goToMask() {
+    this.$router.push({ name: 'mask' });
   }
 
   private syncCalendar() {

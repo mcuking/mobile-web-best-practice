@@ -5,6 +5,11 @@ export default [
     component: () => import('@/views/entry/index.vue')
   },
   {
+    path: '/mask',
+    name: 'mask',
+    component: () => import('@/views/mask/index.vue')
+  },
+  {
     path: '/form',
     name: 'form',
     component: () => import('@/views/form/index.vue')
