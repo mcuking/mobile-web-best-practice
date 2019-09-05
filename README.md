@@ -11,14 +11,14 @@
 
 ## 目录
 
+- [项目分层（基于 DDD 分层架构）](#项目分层基于-ddd-分层架构)
 - [组件库](#组件库)
 - [JSBridge](#jsbridge)
-- [路由堆栈管理(模拟原生 APP 导航)](#路由堆栈管理模拟原生-app-导航)
+- [路由堆栈管理（模拟原生 APP 导航）](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
 - [构建时预渲染](#构建时预渲染)
 - [Webpack 策略](#webpack-策略)
   - [基础库抽离](#基础库抽离)
-- [领域驱动设计应用](#领域驱动设计应用)
 - [微前端应用](#微前端应用)
 - [手势库](#手势库)
 - [样式适配](#样式适配)
@@ -32,6 +32,22 @@
 - [性能监控平台](#性能监控平台)
 - [常见问题](#常见问题)
 
+## 项目分层（基于 DDD 分层架构）
+
+[ddd-fe-demo](https://github.com/Vincedream/ddd-fe-demo)
+
+笔者最近在基于领域驱动设计 DDD(Domain Driven Design) 思想开发公司的移动端 CRM 系统，等公司项目完成后会把实践心得集成到本项目中，届时项目中业务代码会有较大变动，计划将 CRM 核心的业务代码引入，以便说明 DDD 是如何降低软件开发的复杂度的。
+
+注意：并不是所有的前端项目都适合用 DDD 思想组织代码，DDD 更适用于逻辑较复杂的业务，比如 OA/CRM 等系统。
+
+同时推荐几篇相关文章：
+
+[领域驱动设计在互联网业务开发中的实践](https://tech.meituan.com/2017/12/22/ddd-in-practice.html)
+
+[前端开发-领域驱动设计](https://juejin.im/post/5b1c71ad6fb9a01e5918398d)
+
+[领域驱动设计在前端中的应用](https://juejin.im/post/5d3926176fb9a07ef161c719)
+
 ## 组件库
 
 [vant](https://youzan.github.io/vant/#/zh-CN/intro)
@@ -44,7 +60,7 @@
 
 vue 移动端组件库目前主要就是上面罗列的这几个库，本项目使用的是有赞前端团队开源的 vant。
 
-vant 官方目前已经支持自定义样式主题，本项目也采用了该方式，请查看相关文档：
+vant 官方目前已经支持自定义样式主题，基本原理就是在 [less-loader](https://github.com/webpack-contrib/less-loader) 编译 [less](http://lesscss.org/) 文件到 css 文件过程中，利用 less 提供的 [modifyVars](http://lesscss.org/usage/#using-less-in-the-browser-modify-variables) 对 less 变量进行修改，本项目也采用了该方式，具体配置请查看相关文档：
 
 [定制主题](https://youzan.github.io/vant/#/zh-CN/theme)
 
@@ -151,7 +167,7 @@ function p(platforms = ['android', 'ios']) {
 
 [JSBridge 实现原理](https://github.com/mcuking/JSBridge)
 
-## 路由堆栈管理(模拟原生 APP 导航)
+## 路由堆栈管理（模拟原生 APP 导航）
 
 [vue-page-stack](https://github.com/hezhongfeng/vue-page-stack)
 
@@ -267,12 +283,6 @@ export default new Home();
 更多内容请查看这篇文章（上面观点来自于这篇文章）：
 
 [Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
-
-## 领域驱动设计应用
-
-[ddd-fe-demo](https://github.com/Vincedream/ddd-fe-demo)
-
-todo
 
 ## 微前端应用
 

@@ -6,6 +6,7 @@ const PrerenderSPAPlugin = require('prerender-spa-plugin');
 const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
 const version = require('./package.json').version;
 const LocalConfig = require('./src/config.json');
+const modifyVars = require('./modify-vars');
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PRO = NODE_ENV === 'production';
@@ -23,10 +24,7 @@ module.exports = {
     extract: false,
     loaderOptions: {
       less: {
-        modifyVars: {
-          'button-primary-background-color': '#1989fa',
-          'button-primary-border-color': '#1989fa'
-        }
+        modifyVars
       }
     }
   },
@@ -41,7 +39,7 @@ module.exports = {
             urlPrefix: '~/mobile-web-best-practice/js', //线上对应的 url 资源的相对路径
             ignore: ['node_modules'] //忽略文件目录, 当然我们在 inlcude 中制定了文件路径,这个忽略目录可以不加
           })
-        )
+        );
       }
 
       if (LocalConfig.PreRenderEnabled) {
@@ -54,7 +52,7 @@ module.exports = {
               renderAfterDocumentEvent: 'render-event' //等待触发目标时间后，开始预渲染
             })
           })
-        )
+        );
       }
 
       return {
@@ -68,15 +66,15 @@ module.exports = {
           moment: 'moment',
           hammerjs: 'Hammer'
         }
-      }
+      };
     } else {
       return {
-        plugins: [...commonPlugins],
-      }
+        plugins: [...commonPlugins]
+      };
     }
   },
   devServer: {
     port: 8080, //配置端口
-    open: true, //自动开启浏览器
-  },
+    open: true //自动开启浏览器
+  }
 };
