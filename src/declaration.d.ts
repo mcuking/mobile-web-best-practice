@@ -6,6 +6,8 @@ declare module 'async-validator';
 
 type Platform = 'browser' | 'android' | 'ios';
 
+type RouterMode = 'hash' | 'history' | 'abstract';
+
 interface Window {
   $sentry: AnyObject;
   $appVersion: string | undefined;
