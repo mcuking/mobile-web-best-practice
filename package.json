@@ -1,6 +1,6 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
