@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import LocalConfig from '@/config.json';
 
 import { ServerApiErrorInfo } from '@/types';
 
@@ -31,9 +32,9 @@ function errorReport(
 }
 
 const DEFAULT_OPTIONS = {
-  baseURL: '',
-  timeout: 30 * 1000,
-  headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+  baseURL: LocalConfig.AxiosBaseUrl,
+  timeout: LocalConfig.AxiosTimeout,
+  headers: LocalConfig.AxiosHeader
 };
 
 const instance = axios.create(DEFAULT_OPTIONS);

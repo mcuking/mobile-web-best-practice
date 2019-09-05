@@ -1,9 +1,18 @@
 {
-    "SentryEnabled": true,
-    "SentryDSN": "https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795",
-    "SentryPluginEnabled": false,
+  "RouterMode": "history",
+  "RouterBase": "/mobile-web-best-practice/",
 
-    "VuePageStackEnabled": true,
+  "AxiosBaseUrl": "",
+  "AxiosTimeout": 30000,
+  "AxiosHeader": {
+    "Content-Type": "application/json;chareset=UTF-8"
+  },
 
-    "PreRenderEnabled": false
+  "SentryEnabled": true,
+  "SentryDSN": "https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795",
+  "SentryPluginEnabled": false,
+
+  "VuePageStackEnabled": true,
+
+  "PreRenderEnabled": false
 }
