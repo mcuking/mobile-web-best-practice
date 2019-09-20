@@ -838,6 +838,63 @@ todo
 
   各位可以选择适合自己项目的方式，有更好的处理方式欢迎留言。
 
+- **Webview 加载本地 html 跨域请求问题**
+
+  当 Webview 加载本地的 html 时，而页面中有向服务器发送请求时，因为当前页面是 file 协议起的，而远端服务器是 http/https 协议，所以会面临跨域问题，一般会报如下错误：
+
+  ```ts
+  core.min.js:36 XMLHttpRequest cannot load http://example.ex.com. No ‘Access-Control-Allow-Origin’ header is present on the requested resource. Origin http://example.ex.com is therefore not allowed access.
+  ```
+
+  解决上面的问题，通常是通过 setAllowUniversalAccessFromFileURLs 这个 API，通过此 API 可以设置是否允许通过 file url 加载的 Javascript 可以访问其他的源，包括其他的文件和 http,https 等其他的源。
+
+  Android Webview 相关代码如下：
+
+  ```java
+  try {
+    if (Build.VERSION.SDK_INT >= 16) {
+        Class<?> clazz = webView.getSettings().getClass();
+        Method method = clazz.getMethod(
+                "setAllowUniversalAccessFromFileURLs", boolean.class);
+        if (method != null) {
+            method.invoke(webView.getSettings(), true);
+        }
+    }
+  } catch (IllegalArgumentException e) {
+    e.printStackTrace();
+  } catch (NoSuchMethodException e) {
+    e.printStackTrace();
+  } catch (IllegalAccessException e) {
+    e.printStackTrace();
+  } catch (InvocationTargetException e) {
+    e.printStackTrace();
+  }
+  ```
+
+  iOS 的 WKWebview 代码如下：
+
+  ```objc
+  WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+  [configuration setValue:@YES forKey:@"_allowUniversalAccessFromFileURLs"];
+  WKWebView *wkWebView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
+
+  // 遍历打印私有属性
+  unsigned int count;
+  Ivar *ivarList = class_copyIvarList([WKWebViewConfiguration class], &count);
+  for (int i = 0; i < count; i++) {
+      Ivar ivar = ivarList[i];
+      NSLog(@"私有属性%s", ivar_getName(ivar));
+  }
+      
+  NSString* htmlPath = [[NSBundle mainBundle] pathForResource:@"Article" ofType:@"html"];
+  NSMutableString* appHtml = [NSMutableString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
+
+  NSURL *baseURL = [NSURL fileURLWithPath:htmlPath];
+  [wkWebView loadHTMLString:appHtml baseURL:baseURL];
+  [self.view addSubview:wkWebView];
+  wkWebView.frame = self.view.bounds;
+  ```
+
 - **input 标签在部分安卓 webview 上无法实现上传图片功能**
 
   因为 Android 的版本碎片问题，很多版本的 WebView 都对唤起函数有不同的支持。我们需要重写 WebChromeClient 下的 openFileChooser()（5.0 及以上系统回调 onShowFileChooser()）。我们通过 Intent 在 openFileChooser()中唤起系统相机和支持 Intent 的相关 app。
