@@ -6,8 +6,9 @@
                    left-arrow
                    @click-left="onClickLeft" />
     </div>
-    <div class="layout__body">
-      <main v-touch:pan="onPan">
+    <div class="layout__body"
+         v-touch:pan="onPan">
+      <main>
         <div class="emoji"
              ref="emoji">{{ selectedContent }}</div>
         <section class="slider">
@@ -157,12 +158,19 @@ export default class Masks extends Vue {
 
   private onTap(e: HammerInput, value: string) {
     if (value) {
-      TweenMax.to(e.target, 0.12, {
-        scale: 1.1,
-        yoyo: true,
-        repeat: 1,
-        ease: Sine.easeOut
-      });
+      // 只有当选项 scale 为 1 时，才会调用放大动画
+      if (
+        e.target.style.transform === '' ||
+        e.target.style.transform === 'matrix(1, 0, 0, 1, 0, 0)'
+      ) {
+        TweenMax.to(e.target, 0.12, {
+          scale: 1.1,
+          yoyo: true,
+          repeat: 1,
+          ease: Sine.easeOut
+        });
+      }
+
       this.selected = value;
     }
   }
