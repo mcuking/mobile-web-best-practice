@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { importAll } from '@/utils/tools';
+import { importAll } from '@/utils/common-tools';
 
 const directvieContext = require.context('./', false, /\.ts$/);
 const directives = importAll(directvieContext, {

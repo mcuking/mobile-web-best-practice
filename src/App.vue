@@ -13,7 +13,7 @@ import { Component, Watch, Vue } from 'vue-property-decorator';
 import { Route } from 'vue-router';
 
 @Component
-export default class Home extends Vue {
+export default class App extends Vue {
   private transitionName = 'forward';
 
   @Watch('$route')

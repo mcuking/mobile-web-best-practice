@@ -1,22 +1,24 @@
+import note from './module/note';
+import notebook from './module/notebook';
+
+const Home = () => import('@/views/home/index.vue');
+const Quote = () => import('@/views/quote/index.vue');
+
 export default [
   {
     path: '/',
-    name: 'entry',
-    component: () => import('@/views/entry/index.vue')
+    redirect: '/home'
   },
   {
-    path: '/mask',
-    name: 'mask',
-    component: () => import('@/views/mask/index.vue')
+    path: '/home',
+    name: 'home',
+    component: Home
   },
   {
-    path: '/form',
-    name: 'form',
-    component: () => import('@/views/form/index.vue')
+    path: '/quote',
+    name: 'quote',
+    component: Quote
   },
-  {
-    path: '/info-list',
-    name: 'info-list',
-    component: () => import('@/views/infoList/index.vue')
-  }
+  ...note,
+  ...notebook
 ];

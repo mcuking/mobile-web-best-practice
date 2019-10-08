@@ -1,15 +1,15 @@
 import Vue from 'vue';
+import VuePageStack from 'vue-page-stack';
+import { Toast, Dialog } from 'vant';
+
 import App from './App.vue';
 import router from './router';
-import store from './store';
-import VuePageStack from 'vue-page-stack';
 import Report from './utils/report';
 import GlobalMethods from './utils/global-method';
 import initMockService from '@/mocks';
-import { initPlatform } from '@/utils/tools';
-import LocalConfig from '@/config.json';
+import { initPlatform } from '@/utils/common-tools';
 import Directives from '@/directives';
-import { Toast } from 'vant';
+import LocalConfig from '@/config.json';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
@@ -33,15 +33,18 @@ if (LocalConfig.SentryEnabled && !IS_DEV) {
   };
 }
 
-initPlatform();
+if (LocalConfig.MockEnabled) {
+  initMockService();
+}
 
-initMockService();
+initPlatform();
 
 Vue.config.productionTip = false;
 
-Vue.use(Toast);
-Vue.use(GlobalMethods);
-Vue.use(Directives);
+Vue.use(Toast)
+  .use(Dialog)
+  .use(GlobalMethods)
+  .use(Directives);
 
 if (LocalConfig.VuePageStackEnabled) {
   Vue.use(VuePageStack, { router });
@@ -49,7 +52,6 @@ if (LocalConfig.VuePageStackEnabled) {
 
 new Vue({
   router,
-  store,
   render: (h) => h(App),
   mounted() {
     if (LocalConfig.PreRenderEnabled) {
