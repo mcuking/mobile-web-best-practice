@@ -1,8 +1,6 @@
 export interface SyncCalendarParams {
-  id: string;
+  id: number;
   title: string;
-  location: string;
-  startTime: number;
-  endTime: number;
+  deadline: number;
   alarm: number[];
 }

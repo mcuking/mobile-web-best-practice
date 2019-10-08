@@ -1,8 +1,12 @@
 # mobile-web-best-practice
 
-移动端 web 最佳实践，基于 [vue-cli3](https://cli.vuejs.org/) 搭建的 [typescript](http://www.typescriptlang.org/) 项目，可以用于 hybrid 应用或者纯 webapp 开发。以下大部分内容同样适用于 [react](https://reactjs.org/) 等前端框架。
+> 本项目以基于 [vue-cli3](https://cli.vuejs.org/) 和 [typescript](http://www.typescriptlang.org/) 搭建的 Todo 应用为例，阐述了在使用 web 进行移动端开发中的一些最佳实践方案(并不局限于 [Vue](https://cn.vuejs.org/) 框架)。另外其中很多方案同样适用于 PC 端 Web 开发。
 
 ## 在线体验
+
+该 Todo 应用交互简洁实用，另外无需服务器，而是将数据保存到 webview 的 indexDB 中，可保证数据安全，欢迎在实际工作生活中使用。效果图如下：
+
+<img src="./assets/memo.gif" width=320/>
 
 | 体验平台 | 二维码                                           | 链接                                                            |
 | -------- | ------------------------------------------------ | --------------------------------------------------------------- |
@@ -11,19 +15,22 @@
 
 ## 目录
 
-- [项目分层（基于 DDD 分层架构）](#项目分层基于-ddd-分层架构)
+- [项目分层架构](#项目分层架构)
+  - [Services 层](#services-层)
+  - [Entities 层](#entities-层)
+  - [Interactors 层](#interactors-层)
 - [组件库](#组件库)
 - [JSBridge](#jsbridge)
 - [路由堆栈管理（模拟原生 APP 导航）](#路由堆栈管理模拟原生-app-导航)
 - [请求数据缓存](#请求数据缓存)
-- [构建时预渲染](#构建时预渲染)
 - [Webpack 策略](#webpack-策略)
   - [基础库抽离](#基础库抽离)
-- [微前端应用](#微前端应用)
+- [离线化](#离线化)
+- [微前端](#微前端)
+- [构建时预渲染](#构建时预渲染)
 - [手势库](#手势库)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
-- [阻止原生返回事件](#阻止原生返回事件)
 - [通过 UA 获取设备信息](#通过-ua-获取设备信息)
 - [mock 数据](#mock-数据)
 - [调试控制台](#调试控制台)
@@ -32,15 +39,225 @@
 - [性能监控平台](#性能监控平台)
 - [常见问题](#常见问题)
 
-## 项目分层（基于 DDD 分层架构）
+## 项目分层架构
+
+[react-clean-architecture](https://github.com/eduardomoroni/react-clean-architecture)
+
+[business-rules-package](https://github.com/fabriciomendonca/business-rules-package)
 
 [ddd-fe-demo](https://github.com/Vincedream/ddd-fe-demo)
 
-笔者最近在基于领域驱动设计 DDD(Domain Driven Design) 思想开发公司的移动端 CRM 系统，等公司项目完成后会把实践心得集成到本项目中，届时项目中业务代码会有较大变动，计划将 CRM 核心的业务代码引入，以便说明 DDD 是如何降低软件开发的复杂度的。
+目前前端开发主要是以单页应用为主，当应用的业务逻辑足够复杂的时候，总会遇到类似下面的问题：
 
-注意：并不是所有的前端项目都适合用 DDD 思想组织代码，DDD 更适用于逻辑较复杂的业务，比如 OA/CRM 等系统。
+- 业务逻辑过于集中在视图层，导致多平台无法共用本应该与平台无关的业务逻辑，例如一个产品需要维护 mobile 和 PC 两端，或者同一个产品有 web 和 react native 两端；
 
-同时推荐几篇相关文章：
+- 产品需要多人协作时，每个人的代码风格和对业务的理解不同，导致业务逻辑分布杂乱无章；
+
+- 对产品的理解停留在页面驱动层面，导致实现的技术模型与实际业务模型出入较大，当业务需求变动时，技术模型很容易被摧毁；
+
+- 过于依赖前端框架，导致如果重构进行框架切换时，需要重写所有业务逻辑并进行回归测试。
+
+针对上面所遇到的问题，笔者学习了一些关于 DDD（领域驱动设计）、Clean Architecture 等知识，并收集了类似思想在前端方面的实践资料，形成了下面这种前端分层架构：
+
+<img src="./assets/architecture.png" width=600/>
+
+其中 View 层想必大家都很了解，就不在这里介绍了，重点介绍下下面三个层的含义：
+
+### Services 层
+
+Services 层是用来对底层技术进行操作的，例如封装 AJAX 请求,操作浏览器 cookie、locaStorage、indexDB，操作 native 提供的能力（如调用摄像头等），以及建立 Websocket 与后端进行交互等。
+
+其中又可细分出来一个 translator 层，主要是对后端提供的接口进行数据的转换修正，例如接口返回的数据命名不规范或格式有问题等等，一般以纯函数形式存在。下面以本项目实际代码为例进行讲解。
+
+向后端获取 quote 数据:
+
+```ts
+export class CommonService implements ICommonService {
+  @m({ maxAge: 60 * 1000 })
+  public async getQuoteList(): Promise<IQuote[]> {
+    const {
+      data: { list }
+    } = await http({
+      method: 'post',
+      url: '/quote/getList',
+      data: {}
+    });
+
+    return list;
+  }
+}
+```
+
+向客户端日历中同步任务数据:
+
+```ts
+export class NativeService implements INativeService {
+  // 同步到日历
+  @p()
+  public syncCalendar(params: SyncCalendarParams, onSuccess: () => void): void {
+    const cb = async (errCode: number) => {
+      const msg = NATIVE_ERROR_CODE_MAP[errCode];
+
+      Vue.prototype.$toast(msg);
+
+      if (errCode !== 6000) {
+        this.errorReport(msg, 'syncCalendar', params);
+      } else {
+        await onSuccess();
+      }
+    };
+
+    dsbridge.call('syncCalendar', params, cb);
+  }
+  ...
+}
+```
+
+向 indexDB 存储任务数据：
+
+```ts
+export class NoteService implements INoteService {
+  public async create(payload: INote, notebookId: number): Promise<void> {
+    const db = await createDB();
+
+    const notebook = await db.getFromIndex('notebooks', 'id', notebookId);
+    if (notebook) {
+      notebook.notes.push(payload);
+      await db.put('notebooks', notebook);
+    }
+  }
+  ...
+}
+```
+
+这里我们可以拓宽下思路，当后端 API 仍在开发的时候，我们可以使用 indexDB 等本地存储技术进行模拟，建立一个 note-indexDB 服务，先提供给上层 Interactors 层进行调用，当后端 API 开发好后，就可以创建一个 note-server 服务，来替换之前的服务。只要保证前后两个服务对外暴露的接口一致，另外与上层的 Interactors 层没有过度耦合，即可实现快速切换。
+
+### Entities 层
+
+实体 Entity 是领域驱动设计的核心概念，它是领域服务的载体，它定义了业务中某个个体的属性和方法。例如本项目中 Note 和 Notebook 都是实体。区分一个对象是否是实体，主要是看他是否有唯一的标志符（例如 id）。下面是本项目的实体 Note:
+
+```ts
+export default class Note {
+  public id: number;
+  public name: string;
+  public deadline: Date | undefined;
+  ...
+
+  constructor(note: INote) {
+    this.id = note.id;
+    this.name = note.name;
+    this.deadline = note.deadline;
+    ...
+  }
+
+  public get isExpire() {
+    if (this.deadline) {
+      return this.deadline.getTime() < new Date().getTime();
+    }
+  }
+
+  public get deadlineStr() {
+    if (this.deadline) {
+      return formatTime(this.deadline);
+    }
+  }
+}
+```
+
+通过上面的代码可以看到，这里主要是以实体本身的属性以及派生属性为主，当然实体本身也可以具有方法，只是本项目中还没有涉及。至于 DDD 中的聚合等概念，也由于项目业务没有涉及，在这里就不作说明了，有兴趣的可以参考下面列出来的笔者翻译的文章：[可扩展的前端#2--常见模式（译）](https://juejin.im/post/5d8ac00cf265da5b6a16844a)。
+
+另外笔者认为并不是所有的实体都应该按上面那样封装成一个类，如果某个实体本身业务逻辑很简单，就没有必要进行封装，例如本项目中 Notebook 实体就没有做任何封装，而是直接在 Interactors 层调用 Services 层提供的 API。
+
+### Interactors 层
+
+Interactors 层是负责处理业务逻辑的层，主要是由业务用例组成。下面是本项目中 Note 的 Interactors 层提供的对 Note 的增删改查以及同步到日历等业务：
+
+```ts
+class NoteInteractor {
+  constructor(
+    private noteService: INoteService,
+    private nativeService: INativeService
+  ) {}
+
+  public async saveNote(payload: INote, notebookId: number, isEdit: boolean) {
+    try {
+      if (isEdit) {
+        await this.noteService.edit(payload, notebookId);
+      } else {
+        await this.noteService.create(payload, notebookId);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getNote(notebookId: number, id: number) {
+    try {
+      const note = await this.noteService.get(notebookId, id);
+      if (note) {
+        return new Note(note);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  ...
+
+  public async changeSyncStatus(
+    notebookId: number,
+    id: number,
+    status: boolean
+  ) {
+    try {
+      const note = await this.getNote(notebookId, id);
+      if (note) {
+        note.isSync = status;
+        await this.saveNote(note, notebookId, true);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async syncCalendar(params: SyncCalendarParams, notebookId: number) {
+    const noteId = params.id;
+    try {
+      await this.nativeService.syncCalendar(params, async () => {
+        await this.changeSyncStatus(notebookId, noteId, true);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+}
+```
+
+通过上面的代码可以看到，Sevices 层提供的类的实例主要是通过 Interactors 层的类的构造函数获取到，这样就可以达到两层之间解耦，实现快速切换 service 的目的了，当然这个和依赖注入 DI 还是有些差距的，不过已经满足了我们的需求。另外，Interactors 层还可以获取 Entities 层提供的类，构造成实例提供给 View 层。
+
+当然这种分层架构并不是银弹，其主要适用的场景是：实体关系复杂，而交互相对模式化，例如企业软件领域。相反实体关系简单而交互复杂多变就不适合这种分层架构了。
+
+在具体业务开发实践中，这种领域模型以及实体一般都是有后端同学确定的，我们需要做的是，和后端的领域模型保持一致，但不是一样。例如同一个功能，在前端只是一个简单的按钮，而在后端则可能相当复杂。
+
+然后需要明确的是，架构和项目文件结构并不是等同的，文件结构是你从视觉上分离应用程序各部分的方式，而架构是从概念上分离应用程序的方式。你可以在很好地保持相同架构的同时，选择不同的文件结构方式。没有完美的文件结构，因此请根据项目的不同选择适合你的文件结构。
+
+最后引用蚂蚁金服数据体验技术的《前端开发-领域驱动设计》文章中的总结作为结尾：
+
+> 要明白，驱动领域层分离的目的并不是页面被复用，这一点在思想上一定要转化过来。领域层并不是因为被多个地方复用而被抽离。它被抽离的原因是：
+>
+> - 领域层是稳定的（页面以及与页面绑定的模块都是不稳定的）
+> - 领域层是解耦的（页面是会耦合的，页面的数据会来自多个接口，多个领域）
+> - 领域层具有极高复杂度，值得单独管理(view 层处理页面渲染以及页面逻辑控制，复杂度已经够高，领域层解耦可以轻 view 层。view 层尽可能轻量是我们架构师 cnfi 主推的思路)
+> - 领域层以层为单位是可以被复用的（你的代码可能会抛弃某个技术体系，从 vue 转成 react，或者可能会推出一个移动版，在这些情况下，领域层这一层都是可以直接复用）
+> - 为了领域模型的持续衍进(模型存在的目的是让人们聚焦，聚焦的好处是加强了前端团队对于业务的理解，思考业务的过程才能让业务前进)
+
+下面推荐几篇相关文章：
+
+[前端架构-让重构不那么痛苦（译）](https://juejin.im/post/5d849084e51d456206115acb)
+
+[可扩展的前端#1--架构基础（译）](https://juejin.im/post/5d897d13f265da03c5035030)
+
+[可扩展的前端#2--常见模式（译）](https://juejin.im/post/5d8ac00cf265da5b6a16844a)
 
 [领域驱动设计在互联网业务开发中的实践](https://tech.meituan.com/2017/12/22/ddd-in-practice.html)
 
@@ -58,7 +275,7 @@
 
 [cube-ui](https://github.com/didi/cube-ui)
 
-vue 移动端组件库目前主要就是上面罗列的这几个库，本项目使用的是有赞前端团队开源的 vant。
+Vue 移动端组件库目前主要就是上面罗列的这几个库，本项目使用的是有赞前端团队开源的 vant。
 
 vant 官方目前已经支持自定义样式主题，基本原理就是在 [less-loader](https://github.com/webpack-contrib/less-loader) 编译 [less](http://lesscss.org/) 文件到 css 文件过程中，利用 less 提供的 [modifyVars](http://lesscss.org/usage/#using-less-in-the-browser-modify-variables) 对 less 变量进行修改，本项目也采用了该方式，具体配置请查看相关文档：
 
@@ -216,49 +433,21 @@ export default function m(options: AnyObject) {
   };
 }
 
-class Home {
+export class CommonService {
   @m({ maxAge: 60 * 1000 })
-  public async getUnderlingDailyList(
-    query: ListQuery
-  ): Promise<{ total: number; list: DailyItem[] }> {
+  public async getQuoteList(): Promise<IQuote[]> {
     const {
-      data: { total, list }
+      data: { list }
     } = await http({
       method: 'post',
-      url: '/daily/getList',
-      data: query
+      url: '/quote/getList',
+      data: {}
     });
 
-    return { total, list };
+    return list;
   }
 }
-
-export default new Home();
 ```
-
-## 构建时预渲染
-
-针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
-
-其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
-
-根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
-
-实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
-
-一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
-
-另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
-
-<img src="./assets/prerender-spa-plugin.png" width="1200"/>
-
-本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
-
-同时推荐几篇相关文章：
-
-[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
-
-[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
 
 ## Webpack 策略
 
@@ -284,11 +473,47 @@ export default new Home();
 
 [Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
-## 微前端应用
+## 离线化
+
+离线化技术可以将网页的网络加载时间变为 0，极大提升应用的用户体验。目前有以下几种实现方式：
+
+- Service Workers: 目前因无法在 iOS 大范围使用；
+
+- 实现一个类 Service Workers 的被动离线化技术，解决 iOS 不兼容问题；
+
+- 离线包技术，即将前端静态资源提前集成到客户端中。
+
+笔者选择了离线包技术，并计划在今年年底之前完成，因这个方案会涉及到前端、客户端以及后端，尤其是客户端工作量较大，所以会花费较长周期，届时会开源整个方案的所有代码，敬请期待。
+
+## 微前端
 
 [qiankun](https://github.com/umijs/qiankun)
 
 todo
+
+## 构建时预渲染
+
+针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
+
+其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
+
+根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
+
+实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
+
+一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
+
+另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
+
+<img src="./assets/prerender-spa-plugin.png" width="1200"/>
+
+本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
+
+同时推荐几篇相关文章：
+
+[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
+
+[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
 
 ## 手势库
 
@@ -493,56 +718,6 @@ class ValidatorUtils {
     }
   }
 }
-```
-
-## 阻止原生返回事件
-
-开发中可能会遇到下面这个需求：
-当页面弹出一个 popup 或 dialog 组件时，点击返回键时是隐藏弹出的组件而不是返回到上一个页面。
-
-为了解决这个问题，我们可以从路由栈角度思考。一般弹出组件是不会在路由栈上添加任何记录，因此我们在弹出组件时，可以在路由栈中 push 一个记录，为了不让页面跳转，我们可以把跳转的目标路由设置为当前页面路由，并加上一个 query 来标记这个组件弹出的状态。
-
-然后监听 query 的变化，当点击弹出组件时，query 中与该弹出组件有关的标记变为 true，则将弹出组件设为显示；当用户点击 native 返回键时，路由返回上一个记录，仍然是当前页面路由，不过 query 中与该弹出组件有关的标记不再是 true 了，这样我们就可以把弹出组件设置成隐藏，同时不会返回上一个页面。相关代码如下：
-
-```ts
-<template>
-  <van-cell title="几时入坑"
-                    is-link
-                    :value="textData.pitDateStr"
-                    @click="goToSelect('calendar')" />
-  <van-popup v-model="showCalendar"
-              position="right"
-              :style="{ height: '100%', width: '100%' }">
-    <Calendar title="选择入坑时间"
-              @select="onSelectPitDate" />
-  </van-popup>
-<template/>
-<script lang="ts">
-...
-export default class Form extends Vue {
-  private showCalendar = false;
-  private goToSelect(popupName: string) {
-    this.$router.push({ name: 'form', query: { [popupName]: 'true' } });
-  }
-
-  private onSelectPitDate(...res: DateObject[]) {
-    ...
-    this.$router.go(-1);
-  }
-
-  @Watch('$route.query')
-  private handlePopup(val: any) {
-    switch (true) {
-      case val.calendar && val.calendar === 'true':
-        this.showCalendar = true;
-        break;
-      default:
-        this.showCalendar = false;
-        break;
-    }
-  }
-}
-</script>
 ```
 
 ## 通过 UA 获取设备信息
@@ -837,63 +1012,6 @@ todo
   2. 将 cookie 存储的 session 持久化到 localSorage，每次请求时都会取 localSorage 存储的 session，并在请求头部添加 cookieback 字段，服务端鉴权时，优先校验 cookieback 字段。这样即使 cookie 丢失或存储的上一次的 session，都不会有影响。不过这种方式相当于绕开了 cookie 传输机制，无法享受 这种机制带来的安全特性。
 
   各位可以选择适合自己项目的方式，有更好的处理方式欢迎留言。
-
-- **Webview 加载本地 html 跨域请求问题**
-
-  当 Webview 加载本地的 html 时，而页面中有向服务器发送请求时，因为当前页面是 file 协议起的，而远端服务器是 http/https 协议，所以会面临跨域问题，一般会报如下错误：
-
-  ```ts
-  core.min.js:36 XMLHttpRequest cannot load http://example.ex.com. No ‘Access-Control-Allow-Origin’ header is present on the requested resource. Origin http://example.ex.com is therefore not allowed access.
-  ```
-
-  解决上面的问题，通常是通过 setAllowUniversalAccessFromFileURLs 这个 API，通过此 API 可以设置是否允许通过 file url 加载的 Javascript 可以访问其他的源，包括其他的文件和 http,https 等其他的源。
-
-  Android Webview 相关代码如下：
-
-  ```java
-  try {
-    if (Build.VERSION.SDK_INT >= 16) {
-        Class<?> clazz = webView.getSettings().getClass();
-        Method method = clazz.getMethod(
-                "setAllowUniversalAccessFromFileURLs", boolean.class);
-        if (method != null) {
-            method.invoke(webView.getSettings(), true);
-        }
-    }
-  } catch (IllegalArgumentException e) {
-    e.printStackTrace();
-  } catch (NoSuchMethodException e) {
-    e.printStackTrace();
-  } catch (IllegalAccessException e) {
-    e.printStackTrace();
-  } catch (InvocationTargetException e) {
-    e.printStackTrace();
-  }
-  ```
-
-  iOS 的 WKWebview 代码如下：
-
-  ```objc
-  WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-  [configuration setValue:@YES forKey:@"_allowUniversalAccessFromFileURLs"];
-  WKWebView *wkWebView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
-
-  // 遍历打印私有属性
-  unsigned int count;
-  Ivar *ivarList = class_copyIvarList([WKWebViewConfiguration class], &count);
-  for (int i = 0; i < count; i++) {
-      Ivar ivar = ivarList[i];
-      NSLog(@"私有属性%s", ivar_getName(ivar));
-  }
-      
-  NSString* htmlPath = [[NSBundle mainBundle] pathForResource:@"Article" ofType:@"html"];
-  NSMutableString* appHtml = [NSMutableString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
-
-  NSURL *baseURL = [NSURL fileURLWithPath:htmlPath];
-  [wkWebView loadHTMLString:appHtml baseURL:baseURL];
-  [self.view addSubview:wkWebView];
-  wkWebView.frame = self.view.bounds;
-  ```
 
 - **input 标签在部分安卓 webview 上无法实现上传图片功能**
 

@@ -6,7 +6,9 @@ import {
 } from './sentry';
 import { ValidateRules, ValidateError } from './validate';
 import { SyncCalendarParams } from './calendar';
-import { DailyItem } from './daily';
+import { IQuote } from './quote';
+import { INote } from './note';
+import { INotebook } from './notebook';
 
 export {
   UserInfo,
@@ -16,5 +18,7 @@ export {
   ValidateRules,
   ValidateError,
   SyncCalendarParams,
-  DailyItem
+  IQuote,
+  INote,
+  INotebook
 };

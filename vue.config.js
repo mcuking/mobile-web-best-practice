@@ -74,7 +74,7 @@ module.exports = {
     }
   },
   devServer: {
-    port: 8080, //配置端口
+    port: 8088, //配置端口
     open: true //自动开启浏览器
   }
 };

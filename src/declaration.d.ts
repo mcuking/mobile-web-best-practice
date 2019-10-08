@@ -4,6 +4,8 @@ declare module 'vue-page-stack';
 
 declare module 'async-validator';
 
+declare module 'vuedraggable';
+
 type Platform = 'browser' | 'android' | 'ios';
 
 type RouterMode = 'hash' | 'history' | 'abstract';
@@ -22,4 +24,11 @@ interface AnyObject {
 interface ListQuery extends AnyObject {
   page: number;
   count: number;
+}
+
+interface Dictionary<T> {
+  [index: string]: T;
+}
+interface NumericDictionary<T> {
+  [index: number]: T;
 }

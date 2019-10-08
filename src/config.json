@@ -1,6 +1,6 @@
 {
-  "RouterMode": "history",
-  "RouterBase": "/mobile-web-best-practice/",
+  "RouterMode": "hash",
+  "RouterBase": "./",
 
   "AxiosBaseUrl": "",
   "AxiosTimeout": 30000,
@@ -12,7 +12,11 @@
   "SentryDSN": "https://3ea4cc2c4ad34ba394a029034d4251d0@sentry.io/1527795",
   "SentryPluginEnabled": false,
 
+  "MockEnabled": true,
+
   "VuePageStackEnabled": true,
 
-  "PreRenderEnabled": false
+  "PreRenderEnabled": false,
+
+  "ListQueryCount": 5
 }
