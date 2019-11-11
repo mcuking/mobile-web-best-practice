@@ -1,9 +1,0 @@
-name: 'Deploy to GitHub Pages'
-description: 'This action will handle the building and deploying process of your project to GitHub Pages.'
-author: 'mcuking <mcuking.tang@gmail.com>'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
-branding:
-  icon: 'git-commit'
-  color: 'orange'
