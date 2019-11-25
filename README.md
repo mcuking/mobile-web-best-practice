@@ -27,7 +27,7 @@
 - [请求数据缓存](#请求数据缓存)
 - [Webpack 策略](#webpack-策略)
   - [基础库抽离](#基础库抽离)
-- [离线化](#离线化)
+- [离线包](#离线包)
 - [微前端](#微前端)
 - [构建时预渲染](#构建时预渲染)
 - [手势库](#手势库)
@@ -480,7 +480,7 @@ export class CommonService {
 
 [Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
-## 离线化
+## 离线包
 
 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)
 
@@ -488,15 +488,11 @@ export class CommonService {
 
 [offline-package-webpack-plugin](https://github.com/mcuking/offline-package-webpack-plugin)
 
-离线化技术可以将网页的网络加载时间变为 0，极大提升应用的用户体验。目前有以下几种实现方式：
+离线包技术可以将网页的网络加载时间变为 0，极大提升应用的用户体验。原理如下图所示：
 
-- Service Workers: 目前因无法在 iOS 大范围使用；
+<img src="./assets/offline-principle.png" width=600/>
 
-- 实现一个类 Service Workers 的被动离线化技术，解决 iOS 不兼容问题；
-
-- 离线包技术，即将前端静态资源提前集成到客户端中。
-
-笔者选择了离线包技术，并计划在今年年底之前完成，因这个方案会涉及到前端、客户端以及后端，尤其是客户端工作量较大，所以会花费较长周期，届时会开源整个方案的所有代码，敬请期待。
+todo
 
 ## 微前端
 
