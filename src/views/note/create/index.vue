@@ -17,7 +17,7 @@
                    required />
         <van-cell title="截止时间"
                   :value="deadlineText"
-                  @click="selectDeadlineShow=true"
+                  @click="setSelectDeadlineShow(true)"
                   is-link></van-cell>
         <van-cell title="同步任务到手机日历"
                   @click="toggleSyncCalendar">
@@ -46,8 +46,8 @@
                            title="选择截止时间"
                            type="datetime"
                            :formatter="dateTimePickerFormatter"
-                           :min-date="new Date()"
-                           @cancel="selectDeadlineShow = false"
+                           :min-date="minDate"
+                           @cancel="setSelectDeadlineShow(false)"
                            @confirm="handleTimePickerConfirm" />
     </van-popup>
   </div>
@@ -106,6 +106,8 @@ export default class NoteCreate extends Vue {
 
   private selectDeadlineShow = false;
 
+  private minDate = new Date();
+
   private formModel: INote = {
     id: createRandomNum(20),
     name: '',
@@ -125,6 +127,10 @@ export default class NoteCreate extends Vue {
     this.$router.go(-1);
   }
 
+  private setSelectDeadlineShow(val: boolean) {
+    this.selectDeadlineShow = val;
+  }
+
   private handleMentionClick() {
     this.$router.push({
       name: 'quote'
@@ -135,7 +141,7 @@ export default class NoteCreate extends Vue {
     this.deadlineText = moment(this.formModel.deadline).format(
       'YYYY-MM-DD HH:mm:ss'
     );
-    this.selectDeadlineShow = false;
+    this.setSelectDeadlineShow(false);
   }
 
   private toggleSyncCalendar() {

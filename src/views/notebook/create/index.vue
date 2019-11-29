@@ -17,7 +17,7 @@
                    required />
         <van-cell title="任务集主题色"
                   :value="themeColorText"
-                  @click="selectThemeColorShow=true"
+                  @click="setSelectThemeColorShow(true)"
                   is-link></van-cell>
       </van-cell-group>
       <div class="bottom-button--submit"
@@ -32,7 +32,7 @@
       <van-picker show-toolbar
                   title="选择主题色"
                   :columns="THEME_COLOR_ARRAY"
-                  @cancel="selectThemeColorShow = false"
+                  @cancel="setSelectThemeColorShow(false)"
                   @confirm="handleSelectThemeColor" />
     </van-popup>
   </div>
@@ -102,8 +102,12 @@ export default class NotebookCreate extends Vue {
     this.$router.go(-1);
   }
 
+  private setSelectThemeColorShow(val: boolean) {
+    this.selectThemeColorShow = val;
+  }
+
   private handleSelectThemeColor(val: AnyObject) {
-    this.selectThemeColorShow = false;
+    this.setSelectThemeColorShow(false);
     this.formModel.themeColor = val.value;
   }
 
