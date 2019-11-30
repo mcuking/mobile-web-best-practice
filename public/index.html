@@ -20,12 +20,12 @@
     </noscript>
     <div id="app"></div>
     <% if (process.env.NODE_ENV === 'production') { %>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuex@3.1.1/dist/vuex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue-router@3.1.3/dist/vue-router.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mockjs@1.0.1-beta3/dist/mock.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.24.0/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="<%= BASE_URL %>lib/vue/2.6.10/vue.min.js"></script>
+    <script src="<%= BASE_URL %>lib/vuex/3.1.1/vuex.min.js"></script>
+    <script src="<%= BASE_URL %>lib/vue-router/3.1.3/vue-router.min.js"></script>
+    <script src="<%= BASE_URL %>lib/mockjs/1.0.1-beta3/mock.min.js"></script>
+    <script src="<%= BASE_URL %>lib/moment/2.24.0/moment.min.js"></script>
+    <script src="<%= BASE_URL %>lib/hammerjs/2.0.8/hammer.min.js"></script>
     <% } %>
     <!-- <script>
       (function() {
