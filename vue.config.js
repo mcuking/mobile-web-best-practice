@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const SentryPlugin = require('@sentry/webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+const OfflinePackagePlugin = require('offline-package-webpack-plugin');
 const PrerenderSPAPlugin = require('prerender-spa-plugin');
 const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
 const version = require('./package.json').version;
@@ -51,6 +52,18 @@ module.exports = {
               headless: false, //打包渲染时是否显示浏览器窗口，调试时有用
               renderAfterDocumentEvent: 'render-event' //等待触发目标时间后，开始预渲染
             })
+          })
+        );
+      }
+
+      if (LocalConfig.OfflinePackageEnabled) {
+        productionPlugins.push(
+          new OfflinePackagePlugin({
+            packageNameKey: 'packageId',
+            packageNameValue: 'mwbp',
+            version: 1,
+            baseUrl: 'http://122.51.132.117/',
+            fileTypes: ['js', 'css', 'png']
           })
         );
       }

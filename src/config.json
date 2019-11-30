@@ -18,5 +18,7 @@
 
   "PreRenderEnabled": false,
 
+  "OfflinePackageEnabled": true,
+
   "ListQueryCount": 5
 }
