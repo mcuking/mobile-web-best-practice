@@ -7,8 +7,8 @@ declare module 'vue/types/vue' {
 }
 
 interface Bus {
-  on(): void;
-  once(): void;
-  off(): void;
-  emit(): void;
+  on(event: string, callback: (...args: any[]) => void): void;
+  once(event: string, callback: (...args: any[]) => void): void;
+  off(event: string, callback: (...args: any[]) => void): void;
+  emit(event: string, ...args: any[]): void;
 }

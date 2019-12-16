@@ -10,10 +10,10 @@
 
 <img src="./assets/memo.gif" width=320/>
 
-| 体验平台 | 二维码                                           | 链接                                            | 备注                                           |
-| -------- | ------------------------------------------------ | ----------------------------------------------- | ---------------------------------------------- |
-| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](http://www.mcuking.club)             | 由于域名还未通过审核，请使用上面的 IP 进行访问 |
-| Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456                               |
+| 体验平台 | 二维码                                           | 链接                                            | 备注             |
+| -------- | ------------------------------------------------ | ----------------------------------------------- | ---------------- |
+| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](http://www.mcuking.club)             |                  |
+| Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
 

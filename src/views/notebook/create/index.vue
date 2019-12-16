@@ -123,6 +123,7 @@ export default class NotebookCreate extends Vue {
   private async handleDeleteNotebook(id: number) {
     try {
       await notebookInteractor.deleteNotebook(id);
+
       this.$router.go(-1);
     } catch (error) {
       console.log(error);

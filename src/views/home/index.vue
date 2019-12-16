@@ -1,31 +1,31 @@
 <template>
   <div class="layout__page">
     <div class="layout__header">
-      <timer></timer>
+      <timer/>
     </div>
     <div class="layout__body">
       <div v-if="!notebooks.length && hasRequest"
            class="list-no-content-tip">
         时不我待，抓紧建个任务吧~
       </div>
-      <van-list v-if="notebooks.length > 0"
-                v-model="loading"
-                :finished="finished"
-                finished-text="没有更多了"
-                :immediate-check="false"
-                @load="getNotebookList({page: query.page + 1})">
-        <div v-for="(notebook, i) in notebooks"
-             class="home__notebook-card-wrapper"
-             :class="{'last': i === notebooks.length -1}"
-             :key="notebook.id">
-          <card :notebook="notebook"
-                @edit-notebook="handleEditNotebookClick"
-                @edit-note="handleEditNoteClick"
-                @toggle-done-status="toggleDoneStatus"
-                @update-note-order="updateNoteOrder"
-                @create-note="handleCreateNoteClick"></card>
+      <vue-better-scroll ref="scroll"
+            :pullDownRefresh="scrollOptions.pullDownRefreshObj"
+            :pullUpLoad="scrollOptions.pullUpLoadObj"
+            @pulling-down="getNotebookList({ page: 1 })"
+            @pulling-up="getNotebookList({ page: query.page + 1 })">
+        <div class="home__notebook-list">    
+          <div v-for="notebook in notebooks"
+              class="home__notebook-card-wrapper"
+              :key="notebook.id">
+            <card :notebook="notebook"
+                  @edit-notebook="handleEditNotebookClick"
+                  @edit-note="handleEditNoteClick"
+                  @toggle-done-status="toggleDoneStatus"
+                  @update-note-order="updateNoteOrder"
+                  @create-note="handleCreateNoteClick"></card>
+          </div>
         </div>
-      </van-list>
+      </vue-better-scroll>
     </div>
     <div class="home__button--create-notebook"
          id="fixed-bottom">
@@ -60,18 +60,25 @@ Vue.use(NavBar)
 export default class Home extends Vue {
   private notebooks: INotebook[] = [];
 
-  private loading = false;
-
-  private finished = false;
-
   private query = {
     page: 1,
     count: LocalConfig.ListQueryCount
   };
 
-  private total = 0;
+  private listTotal = 0;
 
   private hasRequest = false;
+
+  private scrollOptions = {
+    pullDownRefreshObj: true,
+    pullUpLoadObj: {
+      threshold: 0,
+      txt: {
+        more: '加载更多',
+        noMore: '没有更多数据了'
+      }
+    },
+  };
 
   private async getNotebookList(query: ListQuery) {
     try {
@@ -81,18 +88,21 @@ export default class Home extends Vue {
         this.query
       );
 
-      this.total = total;
+      this.listTotal = total;
 
       if (this.query.page === 1) {
         this.notebooks = data;
       } else {
         this.notebooks = [...this.notebooks, ...data];
       }
-      this.hasRequest = true;
-      this.loading = false;
-      if (this.notebooks.length >= this.total) {
-        this.finished = true;
+
+      if (this.notebooks.length >= this.listTotal) {
+        (this.$refs.scroll as any).forceUpdate(false);
+      } else {
+        (this.$refs.scroll as any).forceUpdate(true);
       }
+
+      this.hasRequest = true;
     } catch (error) {
       console.log(error);
     }
@@ -154,7 +164,7 @@ export default class Home extends Vue {
     });
   }
 
-  private async activated() {
+  private async created() {
     this.getNotebookList({ page: 1, count: LocalConfig.ListQueryCount });
   }
 }
@@ -162,18 +172,18 @@ export default class Home extends Vue {
 <style lang="less" scoped>
 @import '~@/less/var.less';
 
-.layout__body {
-  padding: 16px;
+.layout__header {
+  padding: 60px 16px 0 16px;
+  background: @background-color;
 }
 
-.layout__header {
-  padding: 60px 16px 40px 16px;
-  background: @background-color;
+.home__notebook-list {
+  padding: 56px 16px 0 16px;
 }
 
 .home__notebook-card-wrapper {
   margin-bottom: 30px;
-  &.last {
+  &:last-child {
     margin-bottom: 0;
   }
 }
