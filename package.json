@@ -1,6 +1,6 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -27,6 +27,7 @@
     "vue-page-stack": "^1.1.0",
     "vue-property-decorator": "^8.1.0",
     "vue-router": "^3.1.2",
+    "vue2-better-scroll": "^1.2.1",
     "vuedraggable": "^2.23.2"
   },
   "devDependencies": {
