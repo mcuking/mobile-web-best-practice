@@ -60,9 +60,9 @@ module.exports = {
         productionPlugins.push(
           new OfflinePackagePlugin({
             packageNameKey: 'packageId',
-            packageNameValue: 'mwbp',
+            packageNameValue: 'main',
             version: 1,
-            baseUrl: 'http://122.51.132.117/',
+            baseUrl: 'http://www.mcuking.club/',
             fileTypes: ['js', 'css', 'png']
           })
         );
