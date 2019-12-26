@@ -1,7 +1,7 @@
 <template>
   <div class="layout__page">
     <div class="layout__header">
-      <timer/>
+      <timer />
     </div>
     <div class="layout__body">
       <div v-if="!notebooks.length && hasRequest"
@@ -9,14 +9,14 @@
         时不我待，抓紧建个任务吧~
       </div>
       <vue-better-scroll ref="scroll"
-            :pullDownRefresh="scrollOptions.pullDownRefreshObj"
-            :pullUpLoad="scrollOptions.pullUpLoadObj"
-            @pulling-down="getNotebookList({ page: 1 })"
-            @pulling-up="getNotebookList({ page: query.page + 1 })">
-        <div class="home__notebook-list">    
+                         :pullDownRefresh="scrollOptions.pullDownRefreshObj"
+                         :pullUpLoad="scrollOptions.pullUpLoadObj"
+                         @pulling-down="getNotebookList({ page: 1 })"
+                         @pulling-up="getNotebookList({ page: query.page + 1 })">
+        <div class="home__notebook-list">
           <div v-for="notebook in notebooks"
-              class="home__notebook-card-wrapper"
-              :key="notebook.id">
+               class="home__notebook-card-wrapper"
+               :key="notebook.id">
             <card :notebook="notebook"
                   @edit-notebook="handleEditNotebookClick"
                   @edit-note="handleEditNoteClick"
@@ -77,7 +77,7 @@ export default class Home extends Vue {
         more: '加载更多',
         noMore: '没有更多数据了'
       }
-    },
+    }
   };
 
   private async getNotebookList(query: ListQuery) {
@@ -165,6 +165,10 @@ export default class Home extends Vue {
   }
 
   private async created() {
+    this.$bus.on('notebook-change', () => {
+      this.getNotebookList(this.query);
+    });
+
     this.getNotebookList({ page: 1, count: LocalConfig.ListQueryCount });
   }
 }

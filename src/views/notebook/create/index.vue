@@ -123,7 +123,7 @@ export default class NotebookCreate extends Vue {
   private async handleDeleteNotebook(id: number) {
     try {
       await notebookInteractor.deleteNotebook(id);
-
+      this.$bus.emit('notebook-change');
       this.$router.go(-1);
     } catch (error) {
       console.log(error);
@@ -137,7 +137,7 @@ export default class NotebookCreate extends Vue {
         try {
           const { formModel, id } = this;
           await notebookInteractor.saveNotebook(formModel, id);
-
+          this.$bus.emit('notebook-change');
           this.$router.go(-1);
         } catch (error) {
           console.log(error);
