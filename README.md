@@ -2,7 +2,7 @@
 
 > 本项目以基于 [vue-cli3](https://cli.vuejs.org/) 和 [typescript](http://www.typescriptlang.org/) 搭建的 Todo 应用为例，阐述了在使用 web 进行移动端开发中的一些最佳实践方案(并不局限于 [Vue](https://cn.vuejs.org/) 框架)。另外其中很多方案同样适用于 PC 端 Web 开发。
 
-笔者会不定期地将实践中的最佳方案更新到本项目中，最近计划是 hybrid 离线包方案和微前端方案。
+笔者会不定期地将实践中的最佳方案更新到本项目中。
 
 ## 在线体验
 
@@ -492,7 +492,147 @@ export class CommonService {
 
 <img src="./assets/offline-principle.png" width=600/>
 
-todo
+我们可以先将页面需要的静态资源打包并预先加载到客户端的安装包中，当用户安装时，再将资源解压到本地存储中，当 WebView 加载某个 H5 页面时，拦截发出的所有 http 请求，查看请求的资源是否在本地存在，如果存在则直接返回资源。
+
+### 前端部分
+
+相关代码：
+
+**离线包打包插件**：https://github.com/mcuking/offline-package-webpack-plugin
+
+**应用插件的前端项目**：https://github.com/mcuking/mobile-web-best-practice
+
+首先需要在前端打包的过程中同时生成离线包，我的思路是 webpack 插件在 emit 钩子时（生成资源并输出到目录之前），通过 compilation 对象（代表了一次单一的版本构建和生成资源）遍历读取 webpack 打包生成的资源，然后将每个资源（可通过文件类型限定遍历范围）的信息记录在一个资源映射的 json 里，具体内容如下：
+
+资源映射 json 示例
+
+```
+{
+  "packageId": "mwbp",
+  "version": 1,
+  "items": [
+    {
+      "packageId": "mwbp",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/app.67073d65.js",
+      "path": "js/app.67073d65.js",
+      "mimeType": "application/javascript"
+    },
+    ...
+  ]
+}
+```
+
+其中 remoteUrl 是该资源在静态资源服务器的地址，path 则是在客户端本地的相对路径（通过拦截该资源对应的服务端请求，并根据相对路径从本地命中相关资源然后返回）。
+
+最后将该资源映射的 json 文件和需要本地化的静态资源打包成 zip 包，以供后面的流程使用。
+
+### 离线包管理平台
+
+相关代码：
+
+**离线包管理平台前后端**：https://github.com/mcuking/offline-package-admin
+
+**文件差分工具**：https://github.com/Exoway/bsdiff-nodejs
+
+从上面有关离线包的阐述中，有心者不难看出其中有个遗漏的问题，那就是当前端的静态资源更新后，客户端中的离线包资源如何更新？难不成要重新发一个安装包吗？那岂不是摒弃了 H5 动态化的特点了么？
+
+而离线包平台就是为了解决这个问题。下面我以 [mobile-web-best-practice](https://github.com/mcuking/mobile-web-best-practice) 这个前端项目为例讲解整个过程：
+
+[mobile-web-best-practice](https://github.com/mcuking/mobile-web-best-practice) 项目对应的离线包名为 main，第一个版本可以如上文所述先预置到客户端安装包里，同时将该离线包上传到离线包管理平台中，该平台除了保存离线包文件和相关信息之外，还会生成一个名为 packageIndex 的 json 文件，即记录所有相关离线包信息集合的文件，该文件主要是提供给客户端下载的。大致内容如下：
+
+```
+{
+  "data": [
+    {
+      "module_name": "main",
+      "version": 2,
+      "status": 1,
+      "origin_file_path": "/download/main/07eb239072934103ca64a9692fb20f83",
+      "origin_file_md5": "ec624b2395a479020d02262eee36efe4",
+      "patch_file_path": "/download/main/b4b8e0616e75c0cc6f34efde20fb6f36",
+      "patch_file_md5": "6863cdacc8ed9550e8011d2b6fffdaba"
+    }
+  ],
+  "errorCode": 0
+}
+```
+
+其中 data 中就是所有相关离线包的信息集合，包括了离线包的版本、状态、以及文件的 url 地址和 md5 值等。
+
+当 [mobile-web-best-practice](https://github.com/mcuking/mobile-web-best-practice) 更新后，会通过 [offline-package-webpack-plugin](https://github.com/mcuking/offline-package-webpack-plugin) 插件打包出一个新的离线包。这个时候我们就可以将这个离线包上传到管理平台，此时 packageIndex 中离线包 main 的版本就会更新成 2。
+
+当客户端启动并请求最新的 packageIndex 文件时，发现离线包 main 的版本比本地对应离线包的版本大时，会从离线包平台下载最新的版本，并以此作为查询本地静态资源文件的资源池。
+
+讲到这里读者可能还会有一个疑问，那就是如果前端仅仅是改动了某一处，客户端仍旧需要下载完整的新包，岂不是很浪费流量同时也延长了文件下载的时间？
+
+针对这个问题我们可以使用一个文件差分工具 - [bsdiff-nodejs](https://github.com/Exoway/bsdiff-nodejs)，该 node 工具调用了 c 语言实现的 bsdiff 算法（基于二进制进行文件比对算出 diff/patch 包）。当上传版本为 2 的离线包到管理平台时，平台会与之前保存的版本为 1 的离线包进行 diff ，算出 1 到 2 的差分包。而客户端仅仅需要下载差分包，然后同样使用基于 bsdiff 算法的工具，和本地版本 1 的离线包进行 patch 生成版本 2 的离线包。
+
+到此离线包管理平台大致原理就讲完了，但仍有待完善的地方，例如：
+
+1. 增加日志功能
+
+2. 增加离线包达到率的统计功能
+
+...
+
+### 客户端
+
+相关项目：
+
+**集成离线包库的安卓项目**：https://github.com/mcuking/mobile-web-best-practice-container
+
+客户端的离线包库目前仅开发了 android 平台，该库是在
+[webpackagekit](https://github.com/yangjianjun198/webpackagekit)（个人开发的安卓离线包库）基础上进行的二次开发，主要实现了一个多版本文件资源管理器，可以支持多个前端离线包预置到客户端中。其中拦截请求的源码如下：
+
+```java
+public class OfflineWebViewClient extends WebViewClient {
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        final String url = request.getUrl().toString();
+        WebResourceResponse resourceResponse = getWebResourceResponse(url);
+        if (resourceResponse == null) {
+            return super.shouldInterceptRequest(view, request);
+        }
+        return resourceResponse;
+    }
+
+    /**
+     * 从本地命中并返回资源
+     * @param url 资源地址
+     */
+    private WebResourceResponse getWebResourceResponse(String url) {
+        try {
+            WebResourceResponse resourceResponse = PackageManager.getInstance().getResource(url);
+            return resourceResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+
+通过对 WebviewClient 类的 shouldInterceptRequest 方法的复写来拦截 http 请求，并从本地查找是否有相应的前端静态资源，如果有则直接返回。
+
+### 部分问题解答
+
+#### 1. 离线包是否可以自动更新？
+
+当前端资源通过 CI 机自动打包后部署到静态资源服务器，那么又如何上传到离线包平台呢？我曾经考虑过当前端资源打包好时，通过接口自动上传到离线包平台。但后来发现可行性不高，因为我们的前端资源是需要经过测试阶段后，通过运维手动修改 docker 版本来更新前端资源。如果自动上传，则会出现离线包平台已经上传了了未经验证的前端资源，而静态资源服务器却没有更新的情况。因此仍需要手动上传离线包。当然读者可以根据实际情况选择合适的上传方式。
+
+#### 2. 多 App 情况下如何区分离线包属于哪个 App？
+
+在上传的离线包填写信息的时候，增加了 appName 字段。当请求离线包列表 json 文件时，在 query 中添加 appName 字段，离线包平台会只返回属于该 App 的离线包列表。
+
+#### 3. 一定要在 App 启动的时候下载离线包吗？
+
+当然可以做的更丰富些，比如可以选择在客户端连接到 Wi-Fi 的时候，或者从后台切换到前台并超过 10 分钟时候。该设置项可以放在离线包平台中进行配置，可以做成全局有效的设置或者针对不同的离线包进行个性化设置。
+
+#### 4. 如果客户端离线包还没有下载完成，而静态资源服务器已经部署了最新的版本，那么是否会出现客户端展示的页面仍然是旧的版本呢？如果这次改动的是接口请求的变动，那岂不是还会引起接口报错？
+
+这个大可不必担心，上面的代码中如果 http 请求没有命中任何前端资源，则会放过该请求，让它去请求远端的服务器。因此即使本地离线包资源没有及时更新，仍然可以保证页面的静态资源是最新的。也就是说有一个兜底的方案，出了问题大不了回到原来的请求服务器的加载模式。
 
 ## 微前端
 
