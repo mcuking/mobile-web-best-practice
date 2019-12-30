@@ -43,7 +43,9 @@
         </van-button>
       </router-link>
     </div>
-    <router-view class="home__detail-placeholder" />
+    <transition>
+      <router-view class="home__detail-placeholder" />
+    </transition>
   </div>
 </template>
 
@@ -171,6 +173,15 @@ export default class Home extends Vue {
 </script>
 <style lang="less" scoped>
 @import '~@/less/var.less';
+
+.v-enter-active,
+.v-leave-active {
+  transition: all 0.3s;
+}
+.v-enter,
+.v-leave-to {
+  transform: translateX(100%);
+}
 
 .home__detail-placeholder {
   position: fixed;
