@@ -1,5 +1,4 @@
 import Vue from 'vue';
-import VuePageStack from 'vue-page-stack';
 import { Toast, Dialog } from 'vant';
 
 import App from './App.vue';
@@ -45,10 +44,6 @@ Vue.use(GlobalMethods)
   .use(Directives)
   .use(Toast)
   .use(Dialog);
-
-if (LocalConfig.VuePageStackEnabled) {
-  Vue.use(VuePageStack, { router });
-}
 
 new Vue({
   router,

@@ -1,59 +1,71 @@
 <template>
   <div class="layout__page">
     <div class="layout__header">
-      <van-nav-bar :title="isEdit ? '编辑任务' : '新建任务'"
-                   left-text="返回"
-                   :right-text="isEdit ? '删除' : ''"
-                   left-arrow
-                   @click-left="handleClickLeft"
-                   @click-right="confirmDeleteNote" />
+      <van-nav-bar
+        :title="isEdit ? '编辑任务' : '新建任务'"
+        left-text="返回"
+        :right-text="isEdit ? '删除' : ''"
+        left-arrow
+        @click-left="handleClickLeft"
+        @click-right="confirmDeleteNote"
+      />
     </div>
     <div class="layout__body">
       <van-cell-group>
-        <van-field v-model="formModel.name"
-                   label="任务名称"
-                   placeholder="请输入任务名称"
-                   maxlength="16"
-                   required />
-        <van-cell title="截止时间"
-                  :value="deadlineText"
-                  @click="setSelectDeadlineShow(true)"
-                  is-link></van-cell>
-        <van-cell title="同步任务到手机日历"
-                  @click="toggleSyncCalendar">
-          <van-checkbox v-model="formModel.isSync"
-                        slot="right-icon"
-                        :disabled="!formModel.deadline" />
+        <van-field
+          v-model="formModel.name"
+          label="任务名称"
+          placeholder="请输入任务名称"
+          maxlength="16"
+          required
+        />
+        <van-cell
+          title="截止时间"
+          :value="deadlineText"
+          @click="setSelectDeadlineShow(true)"
+          is-link
+        ></van-cell>
+        <van-cell title="同步任务到手机日历" @click="toggleSyncCalendar">
+          <van-checkbox
+            v-model="formModel.isSync"
+            slot="right-icon"
+            :disabled="!formModel.deadline"
+          />
         </van-cell>
-        <van-field v-model="formModel.remark"
-                   label="备注"
-                   type="textarea"
-                   placeholder="请输入备注"
-                   maxlength="50" />
+        <van-field
+          v-model="formModel.remark"
+          label="备注"
+          type="textarea"
+          placeholder="请输入备注"
+          maxlength="50"
+        />
       </van-cell-group>
-      <span class="note__create-form--metion extend-click"
-            @click="handleMentionClick">每日名言（演示接口缓存效果）</span>
-      <div class="bottom-button--submit"
-           id="fixed-bottom">
-        <van-button type="primary"
-                    size="large"
-                    @click="handleCreateNote">提交</van-button>
+      <span
+        class="note__create-form--metion extend-click"
+        @click="handleMentionClick"
+        >每日名言（演示接口缓存效果）</span
+      >
+      <div class="bottom-button--submit" id="fixed-bottom">
+        <van-button type="primary" size="large" @click="handleCreateNote"
+          >提交</van-button
+        >
       </div>
     </div>
-    <van-popup v-model="selectDeadlineShow"
-               position="bottom">
-      <van-datetime-picker v-model="formModel.deadline"
-                           title="选择截止时间"
-                           type="datetime"
-                           :formatter="dateTimePickerFormatter"
-                           :min-date="minDate"
-                           @cancel="setSelectDeadlineShow(false)"
-                           @confirm="handleTimePickerConfirm" />
+    <van-popup v-model="selectDeadlineShow" position="bottom">
+      <van-datetime-picker
+        v-model="formModel.deadline"
+        title="选择截止时间"
+        type="datetime"
+        :formatter="dateTimePickerFormatter"
+        :min-date="minDate"
+        @cancel="setSelectDeadlineShow(false)"
+        @confirm="handleTimePickerConfirm"
+      />
     </van-popup>
   </div>
 </template>
 
-<script lang='ts'>
+<script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 import ValidatorUtils from '@/utils/validate';
@@ -97,7 +109,7 @@ export default class NoteCreate extends Vue {
   }
 
   private get isEdit() {
-    return this.$route.name === 'note.edit';
+    return !!this.id;
   }
 
   private validator!: ValidatorUtils;
