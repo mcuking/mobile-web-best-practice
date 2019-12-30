@@ -5,40 +5,36 @@
         <timer />
       </div>
       <div class="layout__body">
-        <div v-if="!notebooks.length && hasRequest" class="list-no-content-tip">
+        <div v-if="!notebooks.length && hasRequest"
+             class="list-no-content-tip">
           时不我待，抓紧建个任务吧~
         </div>
-        <van-list
-          v-if="notebooks.length > 0"
-          v-model="loading"
-          :finished="finished"
-          finished-text="没有更多了"
-          :immediate-check="false"
-          @load="getNotebookList({ page: query.page + 1 })"
-        >
-          <div
-            v-for="(notebook, i) in notebooks"
-            class="home__notebook-card-wrapper"
-            :class="{ last: i === notebooks.length - 1 }"
-            :key="notebook.id"
-          >
-            <card
-              :notebook="notebook"
-              @edit-notebook="handleEditNotebookClick"
-              @edit-note="handleEditNoteClick"
-              @toggle-done-status="toggleDoneStatus"
-              @update-note-order="updateNoteOrder"
-              @create-note="handleCreateNoteClick"
-            ></card>
+        <van-list v-if="notebooks.length > 0"
+                  v-model="loading"
+                  :finished="finished"
+                  finished-text="没有更多了"
+                  :immediate-check="false"
+                  @load="getNotebookList({ page: query.page + 1 })">
+          <div v-for="(notebook, i) in notebooks"
+               class="home__notebook-card-wrapper"
+               :class="{ last: i === notebooks.length - 1 }"
+               :key="notebook.id">
+            <card :notebook="notebook"
+                  @edit-notebook="handleEditNotebookClick"
+                  @edit-note="handleEditNoteClick"
+                  @toggle-done-status="toggleDoneStatus"
+                  @update-note-order="updateNoteOrder"
+                  @create-note="handleCreateNoteClick"></card>
           </div>
         </van-list>
       </div>
-      <router-link
-        class="home__button--create-notebook"
-        id="fixed-bottom"
-        to="/home/notebook/create"
-      >
-        <van-button type="primary" size="normal" icon="plus" round>
+      <router-link class="home__button--create-notebook"
+                   id="fixed-bottom"
+                   to="/home/notebook/create">
+        <van-button type="primary"
+                    size="normal"
+                    icon="plus"
+                    round>
           新建任务集
         </van-button>
       </router-link>
