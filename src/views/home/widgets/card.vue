@@ -1,66 +1,54 @@
 <template>
   <div class="card">
-    <div
-      class="card__title"
-      :class="notebook.themeColor"
-      @click="$emit('edit-notebook', notebook.id)"
-    >
+    <div class="card__title"
+         :class="notebook.themeColor"
+         @click="$emit('edit-notebook', notebook.id)">
       {{ notebook.name }}
     </div>
-    <draggable
-      class="list-group"
-      tag="ul"
-      v-model="notebook.notes"
-      v-bind="dragOptions"
-      @end="$emit('update-note-order', notebook)"
-    >
-      <transition-group type="transition" :name="'flip-list'">
-        <li
-          class="card__note"
-          v-for="(note, j) in notebook.notes"
-          :key="note.id"
-          :class="{ last: j === notebook.notes.length - 1 }"
-          @click.stop="$emit('edit-note', note.id, notebook.id)"
-        >
+    <draggable class="list-group"
+               tag="ul"
+               v-model="notebook.notes"
+               v-bind="dragOptions"
+               @end="$emit('update-note-order', notebook)">
+      <transition-group type="transition"
+                        :name="'flip-list'">
+        <li class="card__note"
+            v-for="(note, j) in notebook.notes"
+            :key="note.id"
+            :class="{ last: j === notebook.notes.length - 1 }"
+            @click.stop="$emit('edit-note', note.id, notebook.id)">
           <div class="card__note-action--drag">
             <i class="iconfont memo-icon-drag-hand extend-click"></i>
           </div>
           <div class="card__note-main">
             <div class="card__note-left">
-              <span
-                class="card__note-name ellipsis"
-                :class="{ done: note.isDone }"
-              >
+              <span class="card__note-name ellipsis"
+                    :class="{ done: note.isDone }">
                 {{ note.name }}
               </span>
-              <div
-                v-if="note.deadlineStr"
-                class="card__note-time ellipsis"
-                :class="{ expire: note.isExpire, done: note.isDone }"
-              >
+              <div v-if="note.deadlineStr"
+                   class="card__note-time ellipsis"
+                   :class="{ expire: note.isExpire, done: note.isDone }">
                 {{ note.deadlineStr }}
               </div>
             </div>
             <div class="card__note-right">
-              <div v-if="note.isSync" class="card__note-sync-indicator">
+              <div v-if="note.isSync"
+                   class="card__note-sync-indicator">
                 <i class="iconfont memo-icon-clock"></i>
               </div>
-              <van-checkbox
-                v-model="note.isDone"
-                class="card__note-action--done extend-click"
-                @click.stop="$emit('toggle-done-status', note.id, notebook.id)"
-                slot="right-icon"
-              />
+              <van-checkbox v-model="note.isDone"
+                            class="card__note-action--done extend-click"
+                            @click.stop="$emit('toggle-done-status', note.id, notebook.id)"
+                            slot="right-icon" />
             </div>
           </div>
         </li>
       </transition-group>
     </draggable>
     <div class="button-wrapper--create-note">
-      <div
-        class="button--create-note"
-        @click.stop="$emit('create-note', notebook.id)"
-      >
+      <div class="button--create-note"
+           @click.stop="$emit('create-note', notebook.id)">
         <i class="iconfont memo-icon-plus"></i>
       </div>
     </div>

@@ -1,45 +1,39 @@
 <template>
   <div class="layout__page">
     <div class="layout__header">
-      <van-nav-bar
-        :title="isEdit ? '编辑任务集' : '新建任务集'"
-        left-text="返回"
-        :right-text="isEdit ? '删除' : ''"
-        left-arrow
-        @click-left="handleClickLeft"
-        @click-right="confirmDeleteNotebook"
-      />
+      <van-nav-bar :title="isEdit ? '编辑任务集' : '新建任务集'"
+                   left-text="返回"
+                   :right-text="isEdit ? '删除' : ''"
+                   left-arrow
+                   @click-left="handleClickLeft"
+                   @click-right="confirmDeleteNotebook" />
     </div>
     <div class="layout__body">
       <van-cell-group class="notebook__create-form">
-        <van-field
-          v-model="formModel.name"
-          label="任务集名称"
-          placeholder="请输入任务集名称"
-          maxlength="15"
-          required
-        />
-        <van-cell
-          title="任务集主题色"
-          :value="themeColorText"
-          @click="setSelectThemeColorShow(true)"
-          is-link
-        ></van-cell>
+        <van-field v-model="formModel.name"
+                   label="任务集名称"
+                   placeholder="请输入任务集名称"
+                   maxlength="15"
+                   required />
+        <van-cell title="任务集主题色"
+                  :value="themeColorText"
+                  @click="setSelectThemeColorShow(true)"
+                  is-link></van-cell>
       </van-cell-group>
-      <div class="bottom-button--submit" id="fixed-bottom">
-        <van-button type="primary" size="large" @click="handleCreateNotebook"
-          >提交</van-button
-        >
+      <div class="bottom-button--submit"
+           id="fixed-bottom">
+        <van-button type="primary"
+                    size="large"
+                    @click="handleCreateNotebook">提交</van-button>
       </div>
     </div>
-    <van-popup v-model="selectThemeColorShow" position="bottom">
-      <van-picker
-        show-toolbar
-        title="选择主题色"
-        :columns="THEME_COLOR_ARRAY"
-        @cancel="setSelectThemeColorShow(false)"
-        @confirm="handleSelectThemeColor"
-      />
+    <van-popup v-model="selectThemeColorShow"
+               position="bottom">
+      <van-picker show-toolbar
+                  title="选择主题色"
+                  :columns="THEME_COLOR_ARRAY"
+                  @cancel="setSelectThemeColorShow(false)"
+                  @confirm="handleSelectThemeColor" />
     </van-popup>
   </div>
 </template>
