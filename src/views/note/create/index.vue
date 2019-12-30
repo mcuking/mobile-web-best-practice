@@ -8,7 +8,8 @@
                    @click-left="handleClickLeft"
                    @click-right="confirmDeleteNote" />
     </div>
-    <div class="layout__body">
+    <div class="layout__body"
+         v-touch:swipe="handleSwipeRight">
       <van-cell-group>
         <van-field v-model="formModel.name"
                    label="任务名称"
@@ -54,9 +55,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Mixins } from 'vue-property-decorator';
 import moment from 'moment';
 import ValidatorUtils from '@/utils/validate';
+import SwipeRightMixin from '@/utils/swipe-right-mixin';
 import noteInteractor from '@/use-cases/note-interactor';
 import { dateTimePickerFormatter, createRandomNum } from '@/utils/common-tools';
 import { INote, ValidateError } from '@/types';
@@ -85,7 +87,7 @@ Vue.use(NavBar)
 @Component({
   components: {}
 })
-export default class NoteCreate extends Vue {
+export default class NoteCreate extends Mixins(SwipeRightMixin) {
   private get id() {
     return this.$route.params.id
       ? parseInt(this.$route.params.id, 10)
