@@ -1,14 +1,14 @@
 <template>
   <div class="home__timer">
     <div class="home__left-timer">
-      <div class="home__left-timer--left">{{moment().format('DD')}}</div>
+      <div class="home__left-timer--left">{{ moment().format('DD') }}</div>
       <div class="home__left-timer--right">
-        <div>{{moment().format('MMMM')}}</div>
-        <div>{{moment().format('YYYY')}}</div>
+        <div>{{ moment().format('MMMM') }}</div>
+        <div>{{ moment().format('YYYY') }}</div>
       </div>
     </div>
     <div class="home__right-timer">
-      {{moment().format('HH:mm')}}
+      {{ moment().format('HH:mm') }}
     </div>
   </div>
 </template>
