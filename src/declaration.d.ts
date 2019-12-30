@@ -6,8 +6,6 @@ declare module 'async-validator';
 
 declare module 'vuedraggable';
 
-declare module 'vue2-better-scroll';
-
 type Platform = 'browser' | 'android' | 'ios';
 
 type RouterMode = 'hash' | 'history' | 'abstract';

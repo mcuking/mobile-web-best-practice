@@ -98,6 +98,9 @@ export default class Card extends Vue {
   padding: 6px 12px;
   border-radius: 4px;
   color: #fff;
+  &:active {
+    opacity: 0.6;
+  }
   &.red {
     background: @red-level;
   }
