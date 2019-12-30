@@ -8,7 +8,8 @@
                    @click-left="handleClickLeft"
                    @click-right="confirmDeleteNotebook" />
     </div>
-    <div class="layout__body">
+    <div class="layout__body"
+         v-touch:swipe="handleSwipeRight">
       <van-cell-group class="notebook__create-form">
         <van-field v-model="formModel.name"
                    label="任务集名称"
@@ -39,8 +40,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Mixins } from 'vue-property-decorator';
 import ValidatorUtils from '@/utils/validate';
+import SwipeRightMixin from '@/utils/swipe-right-mixin';
 import notebookInteractor from '@/use-cases/notebook-interactor';
 import { THEME_COLOR_MAP, THEME_COLOR_ARRAY } from '@/constants/notebook';
 import { INotebook, ValidateError } from '@/types';
@@ -67,7 +69,7 @@ Vue.use(NavBar)
 @Component({
   components: {}
 })
-export default class NotebookCreate extends Vue {
+export default class NotebookCreate extends Mixins(SwipeRightMixin) {
   private get id() {
     return this.$route.params.id
       ? parseInt(this.$route.params.id, 10)
