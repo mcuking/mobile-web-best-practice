@@ -1,7 +1,6 @@
 import Vue from 'vue';
 import VuePageStack from 'vue-page-stack';
 import { Toast, Dialog } from 'vant';
-import VueBetterScroll from 'vue2-better-scroll';
 
 import App from './App.vue';
 import router from './router';
@@ -45,8 +44,7 @@ Vue.config.productionTip = false;
 Vue.use(GlobalMethods)
   .use(Directives)
   .use(Toast)
-  .use(Dialog)
-  .use(VueBetterScroll);
+  .use(Dialog);
 
 if (LocalConfig.VuePageStackEnabled) {
   Vue.use(VuePageStack, { router });

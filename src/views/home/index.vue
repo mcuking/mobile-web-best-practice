@@ -8,24 +8,24 @@
            class="list-no-content-tip">
         时不我待，抓紧建个任务吧~
       </div>
-      <vue-better-scroll ref="scroll"
-                         :pullDownRefresh="scrollOptions.pullDownRefreshObj"
-                         :pullUpLoad="scrollOptions.pullUpLoadObj"
-                         @pulling-down="getNotebookList({ page: 1 })"
-                         @pulling-up="getNotebookList({ page: query.page + 1 })">
-        <div class="home__notebook-list">
-          <div v-for="notebook in notebooks"
-               class="home__notebook-card-wrapper"
-               :key="notebook.id">
-            <card :notebook="notebook"
-                  @edit-notebook="handleEditNotebookClick"
-                  @edit-note="handleEditNoteClick"
-                  @toggle-done-status="toggleDoneStatus"
-                  @update-note-order="updateNoteOrder"
-                  @create-note="handleCreateNoteClick"></card>
-          </div>
+      <van-list v-if="notebooks.length > 0"
+                v-model="loading"
+                :finished="finished"
+                finished-text="没有更多了"
+                :immediate-check="false"
+                @load="getNotebookList({page: query.page + 1})">
+        <div v-for="(notebook, i) in notebooks"
+             class="home__notebook-card-wrapper"
+             :class="{'last': i === notebooks.length -1}"
+             :key="notebook.id">
+          <card :notebook="notebook"
+                @edit-notebook="handleEditNotebookClick"
+                @edit-note="handleEditNoteClick"
+                @toggle-done-status="toggleDoneStatus"
+                @update-note-order="updateNoteOrder"
+                @create-note="handleCreateNoteClick"></card>
         </div>
-      </vue-better-scroll>
+      </van-list>
     </div>
     <div class="home__button--create-notebook"
          id="fixed-bottom">
@@ -65,20 +65,13 @@ export default class Home extends Vue {
     count: LocalConfig.ListQueryCount
   };
 
+  private loading = false;
+
+  private finished = false;
+
   private listTotal = 0;
 
   private hasRequest = false;
-
-  private scrollOptions = {
-    pullDownRefreshObj: true,
-    pullUpLoadObj: {
-      threshold: 0,
-      txt: {
-        more: '加载更多',
-        noMore: '没有更多数据了'
-      }
-    }
-  };
 
   private async getNotebookList(query: ListQuery) {
     try {
@@ -96,10 +89,10 @@ export default class Home extends Vue {
         this.notebooks = [...this.notebooks, ...data];
       }
 
+      this.hasRequest = true;
+      this.loading = false;
       if (this.notebooks.length >= this.listTotal) {
-        (this.$refs.scroll as any).forceUpdate(false);
-      } else {
-        (this.$refs.scroll as any).forceUpdate(true);
+        this.finished = true;
       }
 
       this.hasRequest = true;
@@ -176,13 +169,13 @@ export default class Home extends Vue {
 <style lang="less" scoped>
 @import '~@/less/var.less';
 
-.layout__header {
-  padding: 60px 16px 0 16px;
-  background: @background-color;
+.layout__body {
+  padding: 16px;
 }
 
-.home__notebook-list {
-  padding: 56px 16px 0 16px;
+.layout__header {
+  padding: 60px 16px 40px 16px;
+  background: @background-color;
 }
 
 .home__notebook-card-wrapper {

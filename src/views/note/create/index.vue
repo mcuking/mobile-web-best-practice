@@ -165,6 +165,7 @@ export default class NoteCreate extends Vue {
   private async handleDeleteNote(notebookId: number, id: number) {
     try {
       await noteInteractor.deleteNote(notebookId, id);
+      this.$bus.emit('notebook-change');
       this.$router.go(-1);
     } catch (error) {
       console.log(error);
@@ -188,7 +189,7 @@ export default class NoteCreate extends Vue {
             };
             await noteInteractor.syncCalendar(params, notebookId);
           }
-
+          this.$bus.emit('notebook-change');
           this.$router.go(-1);
         } catch (error) {
           console.log(error);
