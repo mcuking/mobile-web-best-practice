@@ -22,6 +22,7 @@ export default class Timer extends Vue {
   private moment = moment;
 }
 </script>
+
 <style lang="less" scoped>
 @import '~@/less/var.less';
 

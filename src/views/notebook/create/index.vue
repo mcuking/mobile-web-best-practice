@@ -173,6 +173,7 @@ export default class NotebookCreate extends Mixins(SwipeRightMixin) {
   }
 }
 </script>
+
 <style lang="less" scoped>
 .notebook__create-form {
   margin-top: 20px;

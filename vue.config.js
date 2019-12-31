@@ -61,8 +61,8 @@ module.exports = {
           new OfflinePackagePlugin({
             packageNameKey: 'packageId',
             packageNameValue: 'main',
-            version: 4,
-            baseUrl: 'http://www.mcuking.club/',
+            version: 1,
+            baseUrl: 'https://www.mcuking.club/',
             fileTypes: ['js', 'css', 'png']
           })
         );

@@ -80,6 +80,7 @@ export default class Card extends Vue {
   };
 }
 </script>
+
 <style lang="less" scoped>
 @import '~@/less/var.less';
 
