@@ -233,6 +233,7 @@ export default class NoteCreate extends Mixins(SwipeRightMixin) {
   }
 }
 </script>
+
 <style lang="less" scoped>
 @import '~@/less/var.less';
 

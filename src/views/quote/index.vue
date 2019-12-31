@@ -61,6 +61,7 @@ export default class Quote extends Vue {
   }
 }
 </script>
+
 <style lang="less" scoped>
 .info__loading-wrapper {
   display: flex;

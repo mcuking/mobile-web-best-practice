@@ -167,6 +167,7 @@ export default class Home extends Vue {
   }
 }
 </script>
+
 <style lang="less" scoped>
 @import '~@/less/var.less';
 
