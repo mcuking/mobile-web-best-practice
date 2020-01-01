@@ -2,12 +2,11 @@
   <div class="layout__page">
     <div class="layout__header">
       <van-nav-bar title="名言警句三百篇"
-                   left-text="返回"
                    left-arrow
                    @click-left="handleClickLeft" />
     </div>
     <div class="layout__body">
-      <van-cell-group>
+      <van-cell-group class="info__list">
         <van-cell v-for="item in list"
                   :key="item.id"
                   :title="`${item.content}  --${item.creator}`" />
@@ -63,6 +62,10 @@ export default class Quote extends Vue {
 </script>
 
 <style lang="less" scoped>
+.info__list {
+  margin-top: 20px;
+}
+
 .info__loading-wrapper {
   display: flex;
   justify-content: center;

@@ -2,7 +2,6 @@
   <div class="layout__page">
     <div class="layout__header">
       <van-nav-bar :title="isEdit ? '编辑任务集' : '新建任务集'"
-                   left-text="返回"
                    :right-text="isEdit ? '删除' : ''"
                    left-arrow
                    @click-left="handleClickLeft"

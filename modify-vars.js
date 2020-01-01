@@ -3,7 +3,11 @@
 
 const modifyVars = {
   'button-primary-background-color': '#1989fa',
-  'button-primary-border-color': '#1989fa'
+  'button-primary-border-color': '#1989fa',
+  'nav-bar-height': '56px',
+  'nav-bar-arrow-size': '18px',
+  'nav-bar-icon-color': '#323233',
+  'nav-bar-text-color': '#323233'
 };
 
 module.exports = modifyVars;
