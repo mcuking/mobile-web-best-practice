@@ -2,7 +2,6 @@
   <div class="layout__page">
     <div class="layout__header">
       <van-nav-bar :title="isEdit ? '编辑任务' : '新建任务'"
-                   left-text="返回"
                    :right-text="isEdit ? '删除' : ''"
                    left-arrow
                    @click-left="handleClickLeft"
@@ -10,7 +9,7 @@
     </div>
     <div class="layout__body"
          v-touch:swipe="handleSwipeRight">
-      <van-cell-group>
+      <van-cell-group class="note__create-form">
         <van-field v-model="formModel.name"
                    label="任务名称"
                    placeholder="请输入任务名称"
@@ -236,6 +235,10 @@ export default class NoteCreate extends Mixins(SwipeRightMixin) {
 
 <style lang="less" scoped>
 @import '~@/less/var.less';
+
+.note__create-form {
+  margin-top: 20px;
+}
 
 .note__create-form--metion {
   float: right;
