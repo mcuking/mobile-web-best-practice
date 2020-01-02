@@ -23,7 +23,8 @@
   - [Interactors 层](#interactors-层)
 - [组件库](#组件库)
 - [JSBridge](#jsbridge)
-- [路由堆栈管理（模拟原生 APP 导航）](#路由堆栈管理模拟原生-app-导航)
+- [页面导航管理](#页面导航管理)
+- [页面状态保持](#页面状态保持)
 - [请求数据缓存](#请求数据缓存)
 - [Webpack 策略](#webpack-策略)
   - [基础库抽离](#基础库抽离)
@@ -391,7 +392,7 @@ function p(platforms = ['android', 'ios']) {
 
 [JSBridge 实现原理](https://github.com/mcuking/JSBridge)
 
-## 路由堆栈管理（模拟原生 APP 导航）
+## 页面导航管理
 
 [vue-page-stack](https://github.com/hezhongfeng/vue-page-stack)
 
@@ -400,17 +401,61 @@ function p(platforms = ['android', 'ios']) {
 [vue-stack-router](https://github.com/luojilab/vue-stack-router)
 
 在使用 h5 开发 app，会经常遇到下面的需求：
-从列表进入详情页，返回后能够记住当前位置，或者从表单点击某项进入到其他页面选择，然后回到表单页，需要记住之前表单填写的数据。可是目前 vue 或 react 框架的路由，均不支持同时存在两个页面实例，所以需要路由堆栈进行管理。
+从列表进入详情页，返回后能够记住当前位置，或者从表单点击某项进入到其他页面选择，然后回到表单页，需要记住之前表单填写的数据。可是目前 vue 或 react 框架的路由，均不支持同时存在两个页面实例，所以需要路由栈进行管理。
 
 其中 vue-page-stack 和 vue-navigation 均受 vue 的 keepalive 启发，基于 [vue-router](https://router.vuejs.org/)，当进入某个页面时，会查看当前页面是否有缓存，有缓存的话就取出缓存，并且清除排在他后面的所有 vnode，没有缓存就是新的页面，需要存储或者是 replace 当前页面，向栈里面 push 对应的 vnode，从而实现记住页面状态的功能。
 
 而逻辑思维前端团队的 vue-stack-router 则另辟蹊径，抛开了 vue-router，自己独立实现了路由管理，相较于 vue-router，主要是支持同时可以存活 A 和 B 两个页面的实例，或者 A 页面不同状态的两个实例，并支持原生左滑功能。但由于项目还在初期完善，功能还没有 vue-router 强大，建议持续关注后续动态再做决定是否引入。
 
-本项目使用的是 vue-page-stack，各位可以选择适合自己项目的工具。同时推荐几篇相关文章：
+本项目并未使用任何页面导航管理，而是通过 `<router-view>` 实现保持上个页面状态，具体方案可以参考接下来的 `页面状态保持` 部分，各位可以选择适合自己项目的工具。同时推荐几篇相关文章：
 
 [【vue-page-stack】Vue 单页应用导航管理器 正式发布](https://juejin.im/post/5d2ef417f265da1b971aa94f)
 
 [Vue 社区的路由解决方案：vue-stack-router](https://juejin.im/post/5d4ce4fd6fb9a06acd450e8c)
+
+## 页面状态保持
+
+[router-view](https://router.vuejs.org/zh/guide/essentials/nested-routes.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
+
+[scrollBehavior](https://router.vuejs.org/zh/guide/advanced/scroll-behavior.html#%E6%BB%9A%E5%8A%A8%E8%A1%8C%E4%B8%BA)
+
+[scrollTop](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/scrollTop)
+
+[keep-alive](https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%9C%A8%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E4%B8%8A%E4%BD%BF%E7%94%A8-keep-alive)
+
+和上面 `页面导航管理` 部分解决的问题相同：当从 A 页面进入 B 页面再返回时，A 页面滑动位置、条件选择、输入内容等状态均要保持。之所以会单独开一个部分来讲，是因为实际项目中可能并不需要如此重的导航管理器，引入后可能还会引起一些问题，所以可以选择部分较轻量的方案。
+
+首先最先想到的可能是 vue 提供的 keep-alive，对页面实例进行缓存，返回时恢复实例即可（上面的 `页面导航管理` 部分前两个库也是基于 keep-alive 的）。如果遇到需求是：从 A 页面进入 B 页面不需要缓存 B，从 C 页面进入 B 页面需要缓存 B，那么可以将缓存的组件名保存在 vuex 上，然后在 vue-router 路由切换时，根据路由的 from 和 to 的不同来动态增删 vuex 上保存的需要缓存的组件名。具体做法可参考笔者之前写的文章 [keep-alive + vuex + vue-router 实现动态缓存 h5 页面](https://github.com/mcuking/blog/issues/41)。
+
+其次如果只考虑保持页面的滑动位置，可以将页面中需要记住位置的元素 scrollTop 值保存到 vuex  或 sessionStorage 中，key 可以是页面路由，或者再加上页面某个元素的标记，当返回该页面，则取出对应的 scrollTop 值，给整个页面或者其中部分元素重新设置上即可。
+
+不过这种手动记录和恢复的方式显得过于繁琐，而 vue-router 提供的 scrollBehavior 方法，则只需在全局配置一次，即可实现记住页面位置。具体代码如下：
+
+```js
+scrollBehavior (to, from, savedPosition) {
+  if (savedPosition) {
+    return savedPosition
+  } else {
+    return { x: 0, y: 0 }
+  }
+}
+```
+
+但是该方式的缺陷有两点：
+
+1. 需要限定 vue-router 为 history 模式
+
+2. 只能记住整体页面的位置（例如当列表仅仅是页面的一部分，则无法保持位置）
+
+另外如果还需要保持的表单数据等组件 data 中的值，也可以通过 mixin + sessionStorage/localStorage 来实现自动保存和恢复，具体做法可参考笔者之前写的文章 [react-hooks + vue mixin 实现 h5 表单数据自动存储](https://github.com/mcuking/blog/issues/42)
+
+上面提到的方式或多或少都有些缺陷，有没有更好的方式呢？
+
+当然有，最后推荐一种比较完美的方式：`<router-view>`，即路由嵌套。通俗点说就是可以在 A 页面上再覆盖 B 页面，在 B 页面再覆盖 C 页面，而被覆盖的页面并没有销毁，类似安卓原生开发中一个 activity 覆盖另一个 ativity，从而不需要记录和恢复上一个被销毁的页面状态了。
+
+这种方式的另一个好处是，多个页面在路由栈都是有记录的，当从 A 页面进入到 B 页面，然后触发系统返回事件时，会返回到 A 页面。相反如果使用弹出层 popup 来实现 B 页面在弹出层然后整体覆盖 A 页面，触发系统返回时，则会返回到 A 页面的上个页面，因为 B 页面在路由栈中并没有记录。
+
+`<router-view>` 具体实现比较简单，仅需要将 `<router-view>` 设置成 absolute 定位并覆盖整个屏幕，在这里就不赘述了，可以参考目前项目的代码。
 
 ## 请求数据缓存
 
