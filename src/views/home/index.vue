@@ -29,7 +29,6 @@
         </van-list>
       </div>
       <router-link class="home__button--create-notebook"
-                   id="fixed-bottom"
                    to="/home/notebook/create">
         <van-button type="primary"
                     size="normal"

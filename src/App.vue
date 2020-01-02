@@ -20,7 +20,8 @@ export default class App extends Vue {
   // 监听resize事件（键盘弹起触发），然后将 input textarea 元素滑动到可视区域，并将特定元素隐藏
   private handleResize() {
     const clientHeight = document.documentElement.clientHeight;
-    window.addEventListener('resize', () => {
+
+    const resizeHandler = () => {
       // 判断当前 active 的元素是否为 input 或 textarea
       if (
         document.activeElement!.tagName === 'INPUT' ||
@@ -42,7 +43,9 @@ export default class App extends Vue {
           (ele as HTMLElement).style.display = 'block';
         }
       }
-    });
+    };
+
+    window.addEventListener('resize', resizeHandler);
   }
 
   private created() {
