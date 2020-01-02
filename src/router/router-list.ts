@@ -19,25 +19,17 @@ export default [
         component: NotebookCreate
       },
       {
-        path: 'notebook/edit/:id',
-        name: 'notebook.edit',
-        component: NotebookCreate
-      },
-      {
         path: 'note/create',
         name: 'note.create',
-        component: NoteCreate
-      },
-      {
-        path: 'note/edit/:id',
-        name: 'note.edit',
-        component: NoteCreate
+        component: NoteCreate,
+        children: [
+          {
+            path: 'quote',
+            name: 'quote',
+            component: Quote
+          }
+        ]
       }
     ]
-  },
-  {
-    path: '/quote',
-    name: 'quote',
-    component: Quote
   }
 ];

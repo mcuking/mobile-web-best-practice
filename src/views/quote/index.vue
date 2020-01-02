@@ -5,7 +5,8 @@
                    left-arrow
                    @click-left="handleClickLeft" />
     </div>
-    <div class="layout__body">
+    <div class="layout__body"
+         v-touch:swipe="handleSwipeRight">
       <van-cell-group class="info__list">
         <van-cell v-for="item in list"
                   :key="item.id"
@@ -21,7 +22,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Mixins } from 'vue-property-decorator';
+import SwipeRightMixin from '@/utils/swipe-right-mixin';
 import commonInteractor from '@/use-cases/common-interactor';
 import LocalConfig from '@/config.json';
 import { IQuote } from '@/types';
@@ -35,7 +37,7 @@ Vue.use(NavBar)
   .use(Loading);
 
 @Component
-export default class Quote extends Vue {
+export default class Quote extends Mixins(SwipeRightMixin) {
   private list: IQuote[] = [];
 
   private isLoading = false;

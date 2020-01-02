@@ -70,9 +70,10 @@ Vue.use(NavBar)
 })
 export default class NotebookCreate extends Mixins(SwipeRightMixin) {
   private get id() {
-    return this.$route.params.id
-      ? parseInt(this.$route.params.id, 10)
-      : undefined;
+    if (typeof this.$route.query.id === 'string') {
+      return parseInt(this.$route.query.id, 10);
+    }
+    return undefined;
   }
 
   private get isEdit() {
