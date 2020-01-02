@@ -48,7 +48,7 @@
   padding: 10px 16px;
 }
 
-/*  空列表提示语样式 */
+/* 空列表提示语样式 */
 .list-no-content-tip {
   width: 100%;
   height: 100%;
@@ -56,4 +56,24 @@
   justify-content: center;
   align-items: center;
   color: #999;
+}
+
+/* 页面切换默认动画效果 */
+.v-enter-active,
+.v-leave-active {
+  transition: all 0.3s;
+}
+.v-enter,
+.v-leave-to {
+  transform: translateX(100%);
+}
+
+/* 加载到上层的页面的布局样式 */
+.above-loaded-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999999;
 }

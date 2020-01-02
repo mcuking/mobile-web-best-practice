@@ -40,7 +40,7 @@
       </router-link>
     </div>
     <transition>
-      <router-view class="home__detail-placeholder" />
+      <router-view class="above-loaded-page" />
     </transition>
   </div>
 </template>
@@ -130,8 +130,8 @@ export default class Home extends Vue {
 
   private async handleEditNotebookClick(id: number) {
     this.$router.push({
-      name: 'notebook.edit',
-      params: {
+      name: 'notebook.create',
+      query: {
         id: JSON.stringify(id)
       }
     });
@@ -148,11 +148,9 @@ export default class Home extends Vue {
 
   private async handleEditNoteClick(noteId: number, notebookId: number) {
     this.$router.push({
-      name: 'note.edit',
-      params: {
-        id: JSON.stringify(noteId)
-      },
+      name: 'note.create',
       query: {
+        id: JSON.stringify(noteId),
         notebookId: JSON.stringify(notebookId)
       }
     });
@@ -170,24 +168,6 @@ export default class Home extends Vue {
 
 <style lang="less" scoped>
 @import '~@/less/var.less';
-
-.v-enter-active,
-.v-leave-active {
-  transition: all 0.3s;
-}
-.v-enter,
-.v-leave-to {
-  transform: translateX(100%);
-}
-
-.home__detail-placeholder {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99999;
-}
 
 .layout__header {
   padding: 60px 16px 40px 16px;
