@@ -1,4 +1,4 @@
-import { CommonService, ICommonService } from '@/services/common/request';
+import { CommonService, ICommonService } from '../services/common/request';
 
 class CommonInteractor {
   constructor(private commonService: ICommonService) {}

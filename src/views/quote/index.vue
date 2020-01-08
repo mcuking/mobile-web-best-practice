@@ -24,7 +24,7 @@
 <script lang="ts">
 import { Component, Vue, Mixins } from 'vue-property-decorator';
 import SwipeRightMixin from '@/utils/swipe-right-mixin';
-import commonInteractor from '@/use-cases/common-interactor';
+import { commonInteractor } from '@/core';
 import LocalConfig from '@/config.json';
 import { IQuote } from '@/types';
 

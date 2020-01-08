@@ -42,7 +42,7 @@
 import { Component, Vue, Mixins } from 'vue-property-decorator';
 import ValidatorUtils from '@/utils/validate';
 import SwipeRightMixin from '@/utils/swipe-right-mixin';
-import notebookInteractor from '@/use-cases/notebook-interactor';
+import { notebookInteractor } from '@/core';
 import { THEME_COLOR_MAP, THEME_COLOR_ARRAY } from '@/constants/notebook';
 import { INotebook, ValidateError } from '@/types';
 
