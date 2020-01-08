@@ -1,8 +1,8 @@
 import {
   NotebookService,
   INotebookService
-} from '@/services/notebook-indexDB/request';
-import Note from '@/entities/note';
+} from '../services/notebook-indexDB/request';
+import Note from '../entities/note';
 
 import { INotebook, INote } from '@/types';
 

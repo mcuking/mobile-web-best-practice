@@ -46,8 +46,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import notebookInteractor from '@/use-cases/notebook-interactor';
-import noteInteractor from '@/use-cases/note-interactor';
+import { notebookInteractor, noteInteractor } from '@/core';
 import LocalConfig from '@/config.json';
 import { INotebook, INote } from '@/types';
 

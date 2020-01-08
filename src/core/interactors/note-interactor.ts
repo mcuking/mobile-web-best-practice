@@ -1,6 +1,6 @@
-import { NoteService, INoteService } from '@/services/note-indexDB/request';
-import { NativeService, INativeService } from '@/services/native/request';
-import Note from '@/entities/note';
+import { NoteService, INoteService } from '../services/note-indexDB/request';
+import { NativeService, INativeService } from '../services/native/request';
+import Note from '../entities/note';
 
 import { INote, SyncCalendarParams } from '@/types';
 

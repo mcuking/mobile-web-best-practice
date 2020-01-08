@@ -61,7 +61,7 @@ import { Component, Vue, Mixins } from 'vue-property-decorator';
 import moment from 'moment';
 import ValidatorUtils from '@/utils/validate';
 import SwipeRightMixin from '@/utils/swipe-right-mixin';
-import noteInteractor from '@/use-cases/note-interactor';
+import { noteInteractor } from '@/core';
 import { dateTimePickerFormatter, createRandomNum } from '@/utils/common-tools';
 import { INote, ValidateError } from '@/types';
 

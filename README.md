@@ -12,7 +12,7 @@
 
 | 体验平台 | 二维码                                           | 链接                                            | 备注             |
 | -------- | ------------------------------------------------ | ----------------------------------------------- | ---------------- |
-| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](http://www.mcuking.club)             |                  |
+| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](https://www.mcuking.club)             |                  |
 | Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
