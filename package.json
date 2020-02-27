@@ -1,6 +1,6 @@
 {
   "name": "mobile-web-best-practice",
-  "version": "1.2.2",
+  "version": "1.2.4",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -51,7 +51,6 @@
     "lodash-webpack-plugin": "^0.11.5",
     "offline-package-webpack-plugin": "^0.1.9",
     "postcss-px-to-viewport": "^1.1.1",
-    "prerender-spa-plugin": "^3.4.0",
     "typescript": "^3.4.3",
     "vue-template-compiler": "^2.6.10"
   },
