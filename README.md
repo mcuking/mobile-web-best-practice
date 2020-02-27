@@ -12,7 +12,7 @@
 
 | 体验平台 | 二维码                                           | 链接                                            | 备注             |
 | -------- | ------------------------------------------------ | ----------------------------------------------- | ---------------- |
-| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](https://www.mcuking.club)             |                  |
+| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](https://www.mcuking.club)            |                  |
 | Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
@@ -23,23 +23,21 @@
   - [Interactors 层](#interactors-层)
 - [组件库](#组件库)
 - [JSBridge](#jsbridge)
-- [页面导航管理](#页面导航管理)
 - [页面状态保持](#页面状态保持)
 - [请求数据缓存](#请求数据缓存)
-- [Webpack 策略](#webpack-策略)
-  - [基础库抽离](#基础库抽离)
 - [离线包](#离线包)
 - [微前端](#微前端)
-- [构建时预渲染](#构建时预渲染)
-- [手势库](#手势库)
+- [Webpack 策略](#webpack-策略)
+  - [基础库抽离](#基础库抽离)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
+- [手势库](#手势库)
+- [异常监控平台](#异常监控平台)
+- [构建时预渲染](#构建时预渲染)
 - [通过 UA 获取设备信息](#通过-ua-获取设备信息)
 - [mock 数据](#mock-数据)
 - [调试控制台](#调试控制台)
 - [抓包工具](#抓包工具)
-- [异常监控平台](#异常监控平台)
-- [性能监控平台](#性能监控平台)
 - [部署](#部署)
   - [Docker 安装](#docker-安装)
   - [Jenkins 安装和配置](#jenkins-安装和配置)
@@ -392,27 +390,6 @@ function p(platforms = ['android', 'ios']) {
 
 [JSBridge 实现原理](https://github.com/mcuking/JSBridge)
 
-## 页面导航管理
-
-[vue-page-stack](https://github.com/hezhongfeng/vue-page-stack)
-
-[vue-navigation](https://github.com/zack24q/vue-navigation)
-
-[vue-stack-router](https://github.com/luojilab/vue-stack-router)
-
-在使用 h5 开发 app，会经常遇到下面的需求：
-从列表进入详情页，返回后能够记住当前位置，或者从表单点击某项进入到其他页面选择，然后回到表单页，需要记住之前表单填写的数据。可是目前 vue 或 react 框架的路由，均不支持同时存在两个页面实例，所以需要路由栈进行管理。
-
-其中 vue-page-stack 和 vue-navigation 均受 vue 的 keepalive 启发，基于 [vue-router](https://router.vuejs.org/)，当进入某个页面时，会查看当前页面是否有缓存，有缓存的话就取出缓存，并且清除排在他后面的所有 vnode，没有缓存就是新的页面，需要存储或者是 replace 当前页面，向栈里面 push 对应的 vnode，从而实现记住页面状态的功能。
-
-而逻辑思维前端团队的 vue-stack-router 则另辟蹊径，抛开了 vue-router，自己独立实现了路由管理，相较于 vue-router，主要是支持同时可以存活 A 和 B 两个页面的实例，或者 A 页面不同状态的两个实例，并支持原生左滑功能。但由于项目还在初期完善，功能还没有 vue-router 强大，建议持续关注后续动态再做决定是否引入。
-
-本项目并未使用任何页面导航管理，而是通过 `<router-view>` 实现保持上个页面状态，具体方案可以参考接下来的 `页面状态保持` 部分，各位可以选择适合自己项目的工具。同时推荐几篇相关文章：
-
-[【vue-page-stack】Vue 单页应用导航管理器 正式发布](https://juejin.im/post/5d2ef417f265da1b971aa94f)
-
-[Vue 社区的路由解决方案：vue-stack-router](https://juejin.im/post/5d4ce4fd6fb9a06acd450e8c)
-
 ## 页面状态保持
 
 [router-view](https://router.vuejs.org/zh/guide/essentials/nested-routes.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
@@ -500,30 +477,6 @@ export class CommonService {
   }
 }
 ```
-
-## Webpack 策略
-
-### 基础库抽离
-
-对于一些基础库，例如 vue、moment 等，属于不经常变化的静态依赖，一般需要抽离出来以提升每次构建的效率。目前主流方案有两种：
-
-一种是使用 [webpack-dll-plugin](https://webpack.docschina.org/plugins/dll-plugin/) 插件，在首次构建时就讲这些静态依赖单独打包，后续只需引入早已打包好的静态依赖包即可；
-
-另一种就是外部扩展 [Externals](https://webpack.docschina.org/configuration/externals/) 方式，即把不需要打包的静态资源从构建中剔除，使用 CDN 方式引入。下面是 webpack-dll-plugin 相对 Externals 的缺点：
-
-1. 需要配置在每次构建时都不参与编译的静态依赖，并在首次构建时为它们预编译出一份 JS 文件（后文将称其为 lib 文件），每次更新依赖需要手动进行维护，一旦增删依赖或者变更资源版本忘记更新，就会出现 Error 或者版本错误。
-
-2. 无法接入浏览器的新特性 script type="module"，对于某些依赖库提供的原生 ES Modules 的引入方式（比如 vue 的新版引入方式）无法得到支持，没法更好地适配高版本浏览器提供的优良特性以实现更好地性能优化。
-
-3. 将所有资源预编译成一份文件，并将这份文件显式注入项目构建的 HTML 模板中，这样的做法，在 HTTP1 时代是被推崇的，因为那样能减少资源的请求数量，但在 HTTP2 时代如果拆成多个 CDN Link，就能够更充分地利用 HTTP2 的多路复用特性。
-
-不过选择 Externals 还是需要一个靠谱的 CDN 服务的。
-
-本项目选择的是 Externals，各位可根据项目需求选择不同的方案。
-
-更多内容请查看这篇文章（上面观点来自于这篇文章）：
-
-[Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
 ## 离线包
 
@@ -681,105 +634,125 @@ public class OfflineWebViewClient extends WebViewClient {
 
 ## 微前端
 
+[preload-routes](https://github.com/micro-frontends-vue/preload-routes)
+
 [qiankun](https://github.com/umijs/qiankun)
 
-todo
+preload-routes 是目前笔者所在团队使用的微前端方案，下面介绍下其中的运行机制：
 
-## 构建时预渲染
+最终效果：将整个前端项目分解成一个主项目和多个子项目的结构
 
-针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
+1、子项目**按照 vue-cli 3 的 library 模式进行打包**，以便后续主项目引用
+注：在 library 模式中，Vue 是外置的。这意味着包中不会有 Vue，即便你在代码中导入了 Vue。如果这个库会通过一个打包器使用，它将尝试通过打包器以依赖的方式加载 Vue；否则就会回退到一个全局的 Vue 变量。
 
-其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
+2、在编译主项目的时候，**通过 InsertScriptPlugin 插件将子项目的入口文件 main.js 以 script 标签形式插入到主项目的 html 中**
 
-根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
+注：务必将子项目的入口文件 main.js 对应的 script 标签放在主项目入口文件 app.js 的 script 标签之上，这是为了确保子项目的入口文件先于主项目的入口文件代码执行，接下来的步骤就会明白为什么这么做。
 
-实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
+再注：本地开发环境下项目的入口文件编译后的 main.js 是保存在内存中的，所以磁盘上看不见，但是可以访问。
 
-一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
+InsertScriptPlugin 核心代码如下：
 
-另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
-
-<img src="./assets/prerender-spa-plugin.png" width="1200"/>
-
-本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
-
-同时推荐几篇相关文章：
-
-[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
-
-[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
-
-## 手势库
-
-[hammer.js](https://github.com/hammerjs/hammer.js)
-
-[AlloyFinger](https://github.com/AlloyTeam/AlloyFinger)
-
-在移动端开发中，一般都需要支持一些手势，例如拖动（Pan）,缩放（Pinch）,旋转（Rotate）,滑动（swipe）等。目前已经有很成熟的方案了，例如 hammer.js 和腾讯前端团队开发的 AlloyFinger 都很不错。本项目选择基于 hammer.js 进行二次封装成 vue 指令集，各位可根据项目需求选择不同的方案。
-
-下面是二次封装的关键代码，其中用到了 webpack 的 require.context 函数来获取特定模块的上下文，主要用来实现自动化导入模块，比较适用于像 vue 指令这种模块较多的场景：
-
-```ts
-// 用于导入模块的上下文
-export const importAll = (
-  context: __WebpackModuleApi.RequireContext,
-  options: ImportAllOptions = {}
-): AnyObject => {
-  const { useDefault = true, keyTransformFunc, filterFunc } = options;
-
-  let keys = context.keys();
-
-  if (isFunction(filterFunc)) {
-    keys = keys.filter(filterFunc);
-  }
-
-  return keys.reduce((acc: AnyObject, curr: string) => {
-    const key = isFunction(keyTransformFunc) ? keyTransformFunc(curr) : curr;
-    acc[key] = useDefault ? context(curr).default : context(curr);
-    return acc;
-  }, {});
-};
-
-// directives 文件夹下的 index.ts
-const directvieContext = require.context('./', false, /\.ts$/);
-const directives = importAll(directvieContext, {
-  filterFunc: (key: string) => key !== './index.ts',
-  keyTransformFunc: (key: string) =>
-    key.replace(/^\.\//, '').replace(/\.ts$/, '')
-});
-
-export default {
-  install(vue: typeof Vue): void {
-    Object.keys(directives).forEach((key) =>
-      vue.directive(key, directives[key])
-    );
-  }
-};
-
-// touch.ts
-export default {
-  bind(el: HTMLElement, binding: DirectiveBinding) {
-    const hammer: HammerManager = new Hammer(el);
-    const touch = binding.arg as Touch;
-    const listener = binding.value as HammerListener;
-    const modifiers = Object.keys(binding.modifiers);
-
-    switch (touch) {
-      case Touch.Pan:
-        const panEvent = detectPanEvent(modifiers);
-        hammer.on(`pan${panEvent}`, listener);
-        break;
-      ...
+```js
+compiler.hooks.compilation.tap('InsertScriptWebpackPlugin', (compilation) => {
+  compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing.tap(
+    'InsertScriptWebpackPlugin',
+    (htmlPluginData) => {
+      const {
+        assets: { js }
+      } = htmlPluginData;
+      // 将传入的 js 以 script 标签形式插入到 html 中
+      // 注意：需要将子项目的入口文件 main.js 放在主项目入口文件 app.js 之前，因为需要子项目提前将自己的 route list 注册到全局上
+      js.unshift(...self.files);
     }
+  );
+});
+```
+
+3、主项目的 html 要访问子项目里的编译后的 js / css 等资源，需要进行**代理转发**
+
+- 如果是本地开发时，可以通过 webpack 提供的 proxy，例如：
+
+```js
+const PROXY = {
+  '/app-a/': {
+    target: 'http://localhost:10241/'
   }
 };
 ```
 
-另外推荐一篇关于 hammer.js 和一篇关于 require.context 的文章：
+- 如果是线上部署时，可以通过 nginx 转发或者将打包后的主项目和子项目放在一个文件夹中
 
-[H5 案例分享：JS 手势框架 —— Hammer.js](https://www.h5anli.com/articles/201609/hammerjs.html)
+4、当浏览器解析 html 时，解析并执行子项目的 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中
 
-[使用 require.context 实现前端工程自动化](https://www.jianshu.com/p/c894ea00dfec)
+子项目 main.js 代码如下（为了尽量较少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由注册）
+
+```js
+import Vue from 'vue';
+import routes from './routes';
+
+const share = (Vue.__share__ = Vue.__share__ || {});
+const routesPool = (share.routes = share.routes || {});
+
+// 将子项目的 route list 挂载到 Vue.__share__.routes 上，以便后续主项目将其合并到总的路由中
+routesPool[process.env.VUE_APP_NAME] = routes;
+```
+
+5、继续向下解析，解析并执行主项目 main.js 时，**从 Vue.\_\_share\_\_.routes 获取所有子项目的 route list，合并到总的路由表中**，然后初始化一个 vue-router 实例，并传入到 new Vue 内
+
+相关关键代码如下
+
+```js
+// 从 Vue.__share__.routes 获取所有子项目的 route list，合并到总的路由表中
+const routes = Vue.__share__.routes;
+
+export default new Router({
+  routes: Object.values(routes).reduce((acc, prev) => acc.concat(prev), [
+    {
+      path: '/',
+      redirect: '/app-a'
+    }
+  ])
+});
+```
+
+到此就实现了单页面应用按照业务拆分成多个子项目，减少了前端项目的构建时间，同时也解决了代码的冗余问题。
+
+另外如果需要使用 vuex，则和 vue-router 的顺序恰好相反（先主项目后子项目）：
+
+1、首先在主项目的入口文件中初始化一个 store 实例 new Vuex.Store，然后挂在到 Vue.\_\_share\_\_.store 上
+
+2、然后在子项目的 APP.vue 中获取到 Vue.\_\_share\_\_.store 并调用 store.registerModule(‘app-x', store)，将子项目的 store 作为子模块注册到 store 上
+
+**缺陷**：
+
+这个方案最大的问题在于主项目和子项目需要共用一个 Vue 实例，所以无法做到某个子项目要使用最新版 Vue（例如 Vue3）或者切换到其他前端框架。
+
+但它的优势在于方案逻辑清晰，对已有项目的侵入性较小。
+
+## Webpack 策略
+
+### 基础库抽离
+
+对于一些基础库，例如 vue、moment 等，属于不经常变化的静态依赖，一般需要抽离出来以提升每次构建的效率。目前主流方案有两种：
+
+一种是使用 [webpack-dll-plugin](https://webpack.docschina.org/plugins/dll-plugin/) 插件，在首次构建时就讲这些静态依赖单独打包，后续只需引入早已打包好的静态依赖包即可；
+
+另一种就是外部扩展 [Externals](https://webpack.docschina.org/configuration/externals/) 方式，即把不需要打包的静态资源从构建中剔除，使用 CDN 方式引入。下面是 webpack-dll-plugin 相对 Externals 的缺点：
+
+1. 需要配置在每次构建时都不参与编译的静态依赖，并在首次构建时为它们预编译出一份 JS 文件（后文将称其为 lib 文件），每次更新依赖需要手动进行维护，一旦增删依赖或者变更资源版本忘记更新，就会出现 Error 或者版本错误。
+
+2. 无法接入浏览器的新特性 script type="module"，对于某些依赖库提供的原生 ES Modules 的引入方式（比如 vue 的新版引入方式）无法得到支持，没法更好地适配高版本浏览器提供的优良特性以实现更好地性能优化。
+
+3. 将所有资源预编译成一份文件，并将这份文件显式注入项目构建的 HTML 模板中，这样的做法，在 HTTP1 时代是被推崇的，因为那样能减少资源的请求数量，但在 HTTP2 时代如果拆成多个 CDN Link，就能够更充分地利用 HTTP2 的多路复用特性。
+
+不过选择 Externals 还是需要一个靠谱的 CDN 服务的。
+
+本项目选择的是 Externals，各位可根据项目需求选择不同的方案。
+
+更多内容请查看这篇文章（上面观点来自于这篇文章）：
+
+[Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
 ## 样式适配
 
@@ -914,102 +887,77 @@ class ValidatorUtils {
 }
 ```
 
-## 通过 UA 获取设备信息
+## 手势库
 
-在开发 h5 开发时，可能会遇到下面几种情况：
+[hammer.js](https://github.com/hammerjs/hammer.js)
 
-1. 开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
-2. 有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理；
-3. 当 h5 版本已经更新，但是客户端版本并没有同步更新，那么如果之间的接口调用发生了改变，就会出现调用出错。
+[AlloyFinger](https://github.com/AlloyTeam/AlloyFinger)
 
-所以需要一种方式来检测页面当前所处设备的平台类型、app 版本、系统版本等，目前比较靠谱的方式是通过 android / ios webview 修改 UserAgent，在原有的基础上加上特定后缀，然后在网页就可以通过 UA 获取设备相关信息了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例关键代码如下：
+在移动端开发中，一般都需要支持一些手势，例如拖动（Pan）,缩放（Pinch）,旋转（Rotate）,滑动（swipe）等。目前已经有很成熟的方案了，例如 hammer.js 和腾讯前端团队开发的 AlloyFinger 都很不错。本项目选择基于 hammer.js 进行二次封装成 vue 指令集，各位可根据项目需求选择不同的方案。
 
-安卓关键代码：
-
-```java
-// Activity -> onCreate
-...
-// 获取 app 版本
-PackageManager packageManager = getPackageManager();
-PackageInfo packInfo = null;
-try {
-  // getPackageName()是你当前类的包名，0代表是获取版本信息
-  packInfo = packageManager.getPackageInfo(getPackageName(),0);
-} catch (PackageManager.NameNotFoundException e) {
-  e.printStackTrace();
-}
-String appVersion = packInfo.versionName;
-
-// 获取系统版本
-String systemVersion = android.os.Build.VERSION.RELEASE;
-
-mWebSettings.setUserAgentString(
-  mWebSettings.getUserAgentString() + " DSBRIDGE_"  + appVersion + "_" + systemVersion + "_android"
-);
-```
-
-h5 关键代码：
+下面是二次封装的关键代码，其中用到了 webpack 的 require.context 函数来获取特定模块的上下文，主要用来实现自动化导入模块，比较适用于像 vue 指令这种模块较多的场景：
 
 ```ts
-const initDeviceInfo = () => {
-  const UA = navigator.userAgent;
-  const info = UA.match(/\s{1}DSBRIDGE[\w\.]+$/g);
-  if (info && info.length > 0) {
-    const infoArray = info[0].split('_');
-    window.$appVersion = infoArray[1];
-    window.$systemVersion = infoArray[2];
-    window.$platform = infoArray[3] as Platform;
-  } else {
-    window.$appVersion = undefined;
-    window.$systemVersion = undefined;
-    window.$platform = 'browser';
+// 用于导入模块的上下文
+export const importAll = (
+  context: __WebpackModuleApi.RequireContext,
+  options: ImportAllOptions = {}
+): AnyObject => {
+  const { useDefault = true, keyTransformFunc, filterFunc } = options;
+
+  let keys = context.keys();
+
+  if (isFunction(filterFunc)) {
+    keys = keys.filter(filterFunc);
+  }
+
+  return keys.reduce((acc: AnyObject, curr: string) => {
+    const key = isFunction(keyTransformFunc) ? keyTransformFunc(curr) : curr;
+    acc[key] = useDefault ? context(curr).default : context(curr);
+    return acc;
+  }, {});
+};
+
+// directives 文件夹下的 index.ts
+const directvieContext = require.context('./', false, /\.ts$/);
+const directives = importAll(directvieContext, {
+  filterFunc: (key: string) => key !== './index.ts',
+  keyTransformFunc: (key: string) =>
+    key.replace(/^\.\//, '').replace(/\.ts$/, '')
+});
+
+export default {
+  install(vue: typeof Vue): void {
+    Object.keys(directives).forEach((key) =>
+      vue.directive(key, directives[key])
+    );
+  }
+};
+
+// touch.ts
+export default {
+  bind(el: HTMLElement, binding: DirectiveBinding) {
+    const hammer: HammerManager = new Hammer(el);
+    const touch = binding.arg as Touch;
+    const listener = binding.value as HammerListener;
+    const modifiers = Object.keys(binding.modifiers);
+
+    switch (touch) {
+      case Touch.Pan:
+        const panEvent = detectPanEvent(modifiers);
+        hammer.on(`pan${panEvent}`, listener);
+        break;
+      ...
+    }
   }
 };
 ```
 
-## mock 数据
+另外推荐一篇关于 hammer.js 和一篇关于 require.context 的文章：
 
-[Mock](https://github.com/nuysoft/Mock)
+[H5 案例分享：JS 手势框架 —— Hammer.js](https://www.h5anli.com/articles/201609/hammerjs.html)
 
-当前后端进度不一致，接口还尚未实现时，为了不影响彼此的进度，此时前后端约定好接口数据格式后，前端就可以使用 mock 数据进行独立开发了。本项目使用了 Mock 实现前端所需的接口。
-
-## 调试控制台
-
-[eruda](https://github.com/liriliri/eruda)
-
-[vconsole](https://github.com/Tencent/vConsole)
-
-在调试方面，本项目使用 eruda 作为手机端调试面板，功能相当于打开 PC 控制台，可以很方便地查看 console, network, cookie, localStorage 等关键调试信息。与之类似地工具还有微信的前端研发团队开发的 vconsole，各位可以选择适合自己项目的工具。
-
-关于 eruda 使用，推荐使用 cdn 方式加载，至于什么时候加载 eruda，可以根据不同项目制定不同策略。示例代码如下：
-
-```ts
-<script>
-  (function() {
-    const NO_ERUDA = window.location.protocol === 'https:';
-    if (NO_ERUDA) return;
-    const src = 'https://cdn.jsdelivr.net/npm/eruda@1.5.8/eruda.min.js';
-    document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
-    document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
-  })();
-</script>
-```
-
-## 抓包工具
-
-[charles](https://www.charlesproxy.com/)
-
-[fiddler](https://www.telerik.com/fiddler)
-
-虽然有了 eruda 调试工具，但某些情况下仍不能满足需求，比如现网完全关闭 eruda 等情况。
-
-此时就需要抓包工具，相关工具主要就是上面罗列的这两个，各位可以选择适合自己项目的工具。
-
-通过 charles 可以清晰的查看所有请求的信息(注：https 下抓包需要在手机上配置相关证书)。当然 charles 还有更多强大功能，比例模拟弱网情况，资源映射等。
-
-推荐一篇不错的 charles 使用教程：
-
-[解锁 Charles 的姿势](https://juejin.im/post/5a1033d2f265da431f4aa81f)
+[使用 require.context 实现前端工程自动化](https://www.jianshu.com/p/c894ea00dfec)
 
 ## 异常监控平台
 
@@ -1131,7 +1079,7 @@ Vue.config.errorHandler = (error, vm, info) => {
 };
 ```
 
-但是对于我们业务中，经常会对一些以报错代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
+但是对于我们业务中，经常会对一些可能报错的代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
 
 ```js
 if (!IS_DEV) {
@@ -1182,11 +1130,126 @@ sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps d
 
 通常为了安全，是不允许在线上部署 sourcemap 文件的，所以上传 sourcemap 到 sentry 后，可手动删除线上 sourcemap 文件。
 
-## 性能监控平台
+## 构建时预渲染
 
-[performance](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/performance)
+针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
 
-todo
+其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
+
+根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
+
+实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
+
+一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
+
+另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
+
+<img src="./assets/prerender-spa-plugin.png" width="1200"/>
+
+本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
+
+同时推荐几篇相关文章：
+
+[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
+
+[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
+
+## 通过 UA 获取设备信息
+
+在开发 h5 开发时，可能会遇到下面几种情况：
+
+1. 开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
+2. 有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理；
+3. 当 h5 版本已经更新，但是客户端版本并没有同步更新，那么如果之间的接口调用发生了改变，就会出现调用出错。
+
+所以需要一种方式来检测页面当前所处设备的平台类型、app 版本、系统版本等，目前比较靠谱的方式是通过 android / ios webview 修改 UserAgent，在原有的基础上加上特定后缀，然后在网页就可以通过 UA 获取设备相关信息了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例关键代码如下：
+
+安卓关键代码：
+
+```java
+// Activity -> onCreate
+...
+// 获取 app 版本
+PackageManager packageManager = getPackageManager();
+PackageInfo packInfo = null;
+try {
+  // getPackageName()是你当前类的包名，0代表是获取版本信息
+  packInfo = packageManager.getPackageInfo(getPackageName(),0);
+} catch (PackageManager.NameNotFoundException e) {
+  e.printStackTrace();
+}
+String appVersion = packInfo.versionName;
+
+// 获取系统版本
+String systemVersion = android.os.Build.VERSION.RELEASE;
+
+mWebSettings.setUserAgentString(
+  mWebSettings.getUserAgentString() + " DSBRIDGE_"  + appVersion + "_" + systemVersion + "_android"
+);
+```
+
+h5 关键代码：
+
+```ts
+const initDeviceInfo = () => {
+  const UA = navigator.userAgent;
+  const info = UA.match(/\s{1}DSBRIDGE[\w\.]+$/g);
+  if (info && info.length > 0) {
+    const infoArray = info[0].split('_');
+    window.$appVersion = infoArray[1];
+    window.$systemVersion = infoArray[2];
+    window.$platform = infoArray[3] as Platform;
+  } else {
+    window.$appVersion = undefined;
+    window.$systemVersion = undefined;
+    window.$platform = 'browser';
+  }
+};
+```
+
+## mock 数据
+
+[Mock](https://github.com/nuysoft/Mock)
+
+当前后端进度不一致，接口还尚未实现时，为了不影响彼此的进度，此时前后端约定好接口数据格式后，前端就可以使用 mock 数据进行独立开发了。本项目使用了 Mock 实现前端所需的接口。
+
+## 调试控制台
+
+[eruda](https://github.com/liriliri/eruda)
+
+[vconsole](https://github.com/Tencent/vConsole)
+
+在调试方面，本项目使用 eruda 作为手机端调试面板，功能相当于打开 PC 控制台，可以很方便地查看 console, network, cookie, localStorage 等关键调试信息。与之类似地工具还有微信的前端研发团队开发的 vconsole，各位可以选择适合自己项目的工具。
+
+关于 eruda 使用，推荐使用 cdn 方式加载，至于什么时候加载 eruda，可以根据不同项目制定不同策略。示例代码如下：
+
+```ts
+<script>
+  (function() {
+    const NO_ERUDA = window.location.protocol === 'https:';
+    if (NO_ERUDA) return;
+    const src = 'https://cdn.jsdelivr.net/npm/eruda@1.5.8/eruda.min.js';
+    document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
+    document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
+  })();
+</script>
+```
+
+## 抓包工具
+
+[charles](https://www.charlesproxy.com/)
+
+[fiddler](https://www.telerik.com/fiddler)
+
+虽然有了 eruda 调试工具，但某些情况下仍不能满足需求，比如现网完全关闭 eruda 等情况。
+
+此时就需要抓包工具，相关工具主要就是上面罗列的这两个，各位可以选择适合自己项目的工具。
+
+通过 charles 可以清晰的查看所有请求的信息(注：https 下抓包需要在手机上配置相关证书)。当然 charles 还有更多强大功能，比例模拟弱网情况，资源映射等。
+
+推荐一篇不错的 charles 使用教程：
+
+[解锁 Charles 的姿势](https://juejin.im/post/5a1033d2f265da431f4aa81f)
 
 ## 部署
 
