@@ -33,7 +33,6 @@
 - [表单校验](#表单校验)
 - [手势库](#手势库)
 - [异常监控平台](#异常监控平台)
-- [构建时预渲染](#构建时预渲染)
 - [通过 UA 获取设备信息](#通过-ua-获取设备信息)
 - [mock 数据](#mock-数据)
 - [调试控制台](#调试控制台)
@@ -1129,30 +1128,6 @@ sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps d
 当然官方也提供了 webpack 插件 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)，当打包时触发 webpack 的 after-emit 事件钩子（即生成资源到 output 目录之后），插件会自动上传打包目录中的 sourcemap 和关联的 js，相关配置可参考本项目的 vue.config.js 文件。
 
 通常为了安全，是不允许在线上部署 sourcemap 文件的，所以上传 sourcemap 到 sentry 后，可手动删除线上 sourcemap 文件。
-
-## 构建时预渲染
-
-针对目前单页面首屏渲染时间长（需要下载解析 js 文件然后渲染元素并挂载到 id 为 app 的 div 上），SEO 不友好（index.html 的 body 上实际元素只有 id 为 app 的 div 元素，真正的页面元素都是动态挂载的，搜索引擎的爬虫无法捕捉到），目前主流解决方案就是服务端渲染（SSR），即从服务端生成组装好的完整静态 html 发送到浏览器进行展示，但配置较为复杂，一般都会借助框架，比如 vue 的 [nuxt.js](https://github.com/nuxt/nuxt.js)，react 的 [next](https://github.com/zeit/next.js)。
-
-其实有一种更简便的方式--构建时预渲染。顾名思义，就是项目打包构建完成后，启动一个 Web Server 来运行整个网站，再开启多个无头浏览器（例如 [Puppeteer](https://github.com/GoogleChrome/puppeteer)、[Phantomjs](https://github.com/ariya/phantomjs) 等无头浏览器技术）去请求项目中所有的路由，当请求的网页渲染到第一个需要预渲染的页面时（需提前配置需要预渲染页面的路由），会主动抛出一个事件，该事件由无头浏览器截获，然后将此时的页面内容生成一个 HTML（包含了 JS 生成的 DOM 结构和 CSS 样式），保存到打包文件夹中。
-
-根据上面的描述，我们可以其实它本质上就只是快照页面，不适合过度依赖后端接口的动态页面，比较适合变化不频繁的静态页面。
-
-实际项目相关工具方面比较推荐 [prerender-spa-plugin](https://github.com/chrisvfritz/prerender-spa-plugin) 这个 webpack 插件，下面是这个插件的原理图。不过有两点需要注意：
-
-一个是这个插件需要依赖 Puppeteer，而因为国内网络原因以及本身体积较大，经常下载失败，不过可以通过 .npmrc 文件指定 Puppeteer 的下载路径为国内镜像；
-
-另一个是需要设置路由模式为 history 模式（即基于 html5 提供的 history api 实现的，react 叫 BrowserRouter，vue 叫 history），因为 hash 路由无法对应到实际的物理路由。（即线上渲染时 history 下，如果 form 路由被设置成预渲染，那么访问 /form/ 路由时，会直接从服务端返回 form 文件夹下的 index.html，之前打包时就已经预先生成了完整的 HTML 文件 ）
-
-<img src="./assets/prerender-spa-plugin.png" width="1200"/>
-
-本项目已经集成了 prerender-spa-plugin，但由于和 vue-stack-page/vue-navigation 这类路由堆栈管理器一起使用有问题（原因还在查找，如果知道的朋友也可以告知下），所以 prerender 功能是关闭的。
-
-同时推荐几篇相关文章：
-
-[vue 预渲染之 prerender-spa-plugin 解析(一)](https://blog.csdn.net/vv_bug/article/details/84593052)
-
-[使用预渲提升 SPA 应用体验](https://juejin.im/post/5d5fa22ee51d4561de20b5f5)
 
 ## 通过 UA 获取设备信息
 

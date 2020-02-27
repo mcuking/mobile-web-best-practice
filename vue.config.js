@@ -3,8 +3,6 @@ const webpack = require('webpack');
 const SentryPlugin = require('@sentry/webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const OfflinePackagePlugin = require('offline-package-webpack-plugin');
-const PrerenderSPAPlugin = require('prerender-spa-plugin');
-const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
 const version = require('./package.json').version;
 const LocalConfig = require('./src/config.json');
 const modifyVars = require('./modify-vars');
@@ -43,25 +41,12 @@ module.exports = {
         );
       }
 
-      if (LocalConfig.PreRenderEnabled) {
-        productionPlugins.push(
-          new PrerenderSPAPlugin({
-            staticDir: path.join(__dirname, 'dist'),
-            routes: ['/'], //需要预渲染的路由
-            renderer: new Renderer({
-              headless: false, //打包渲染时是否显示浏览器窗口，调试时有用
-              renderAfterDocumentEvent: 'render-event' //等待触发目标时间后，开始预渲染
-            })
-          })
-        );
-      }
-
       if (LocalConfig.OfflinePackageEnabled) {
         productionPlugins.push(
           new OfflinePackagePlugin({
             packageNameKey: 'packageId',
             packageNameValue: 'main',
-            version: 2,
+            version: 3,
             baseUrl: 'https://www.mcuking.club/',
             fileTypes: ['js', 'css', 'png']
           })

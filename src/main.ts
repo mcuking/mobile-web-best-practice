@@ -47,11 +47,5 @@ Vue.use(GlobalMethods)
 
 new Vue({
   router,
-  render: (h) => h(App),
-  mounted() {
-    if (LocalConfig.PreRenderEnabled) {
-      // 触发 renderAfterDocumentEvent
-      document.dispatchEvent(new Event('render-event'));
-    }
-  }
+  render: (h) => h(App)
 }).$mount('#app');
