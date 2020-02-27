@@ -18,30 +18,19 @@
 ## 目录
 
 - [项目分层架构](#项目分层架构)
-  - [Services 层](#services-层)
-  - [Entities 层](#entities-层)
-  - [Interactors 层](#interactors-层)
-- [组件库](#组件库)
-- [JSBridge](#jsbridge)
-- [页面状态保持](#页面状态保持)
-- [请求数据缓存](#请求数据缓存)
 - [离线包](#离线包)
 - [微前端](#微前端)
-- [Webpack 策略](#webpack-策略)
-  - [基础库抽离](#基础库抽离)
+- [JSBridge](#jsbridge)
+- [异常监控平台](#异常监控平台)
+- [页面状态保持](#页面状态保持)
+- [请求数据缓存](#请求数据缓存)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
 - [手势库](#手势库)
-- [异常监控平台](#异常监控平台)
-- [通过 UA 获取设备信息](#通过-ua-获取设备信息)
-- [mock 数据](#mock-数据)
+- [Webpack 策略](#webpack-策略)
 - [调试控制台](#调试控制台)
 - [抓包工具](#抓包工具)
 - [部署](#部署)
-  - [Docker 安装](#docker-安装)
-  - [Jenkins 安装和配置](#jenkins-安装和配置)
-  - [关联 Jenkins 和 Github](#关联-jenkins-和-github)
-  - [实现自动触发打包](#实现自动触发打包)
 - [常见问题](#常见问题)
 
 ## 项目分层架构
@@ -270,213 +259,6 @@ class NoteInteractor {
 
 [领域驱动设计在前端中的应用](https://juejin.im/post/5d3926176fb9a07ef161c719)
 
-## 组件库
-
-[vant](https://youzan.github.io/vant/#/zh-CN/intro)
-
-[vux](https://github.com/airyland/vux)
-
-[mint-ui](https://github.com/ElemeFE/mint-ui)
-
-[cube-ui](https://github.com/didi/cube-ui)
-
-Vue 移动端组件库目前主要就是上面罗列的这几个库，本项目使用的是有赞前端团队开源的 vant。
-
-vant 官方目前已经支持自定义样式主题，基本原理就是在 [less-loader](https://github.com/webpack-contrib/less-loader) 编译 [less](http://lesscss.org/) 文件到 css 文件过程中，利用 less 提供的 [modifyVars](http://lesscss.org/usage/#using-less-in-the-browser-modify-variables) 对 less 变量进行修改，本项目也采用了该方式，具体配置请查看相关文档：
-
-[定制主题](https://youzan.github.io/vant/#/zh-CN/theme)
-
-推荐一篇介绍各个组件库特点的文章：
-
-[Vue 常用组件库的比较分析（移动端）](https://blog.csdn.net/weixin_38633659/article/details/89736656)
-
-## JSBridge
-
-[DSBridge-IOS](https://github.com/wendux/DSBridge-IOS)
-
-[DSBridge-Android](https://github.com/wendux/DSBridge-Android)
-
-[WebViewJavascriptBridge](https://github.com/marcuswestin/WebViewJavascriptBridge)
-
-混合应用中一般都是通过 webview 加载网页，而当网页要获取设备能力（例如调用摄像头、本地日历等）或者 native 需要调用网页里的方法，就需要通过 JSBridge 进行通信。
-
-开源社区中有很多功能强大的 JSBridge，例如上面列举的库。本项目基于保持 iOS android 平台接口统一原因，采用了 DSBridge，各位可以选择适合自己项目的工具。
-
-本项目以 h5 调用 native 提供的同步日历接口为例，演示如何在 dsbridge 基础上进行两端通信的。下面是两端的关键代码摘要：
-
-安卓端同步日历核心代码，具体代码请查看与本项目配套的安卓项目 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)：
-
-```java
-public class JsApi {
-    /**
-     * 同步日历接口
-     * msg 格式如下：
-     * ...
-     */
-    @JavascriptInterface
-    public void syncCalendar(Object msg, CompletionHandler<Integer> handler) {
-        try {
-            JSONObject obj = new JSONObject(msg.toString());
-            String id = obj.getString("id");
-            String title = obj.getString("title");
-            String location = obj.getString("location");
-            long startTime = obj.getLong("startTime");
-            long endTime = obj.getLong("endTime");
-            JSONArray earlyRemindTime = obj.getJSONArray("alarm");
-            String res = CalendarReminderUtils.addCalendarEvent(id, title, location, startTime, endTime, earlyRemindTime);
-            handler.complete(Integer.valueOf(res));
-        } catch (Exception e) {
-            e.printStackTrace();
-            handler.complete(6005);
-        }
-    }
-}
-```
-
-h5 端同步日历核心代码（通过装饰器来限制调用接口的平台）
-
-```ts
-class NativeMethods {
-  // 同步到日历
-  @p()
-  public syncCalendar(params: SyncCalendarParams) {
-    const cb = (errCode: number) => {
-      const msg = NATIVE_ERROR_CODE_MAP[errCode];
-
-      Vue.prototype.$toast(msg);
-
-      if (errCode !== 6000) {
-        this.errorReport(msg, 'syncCalendar', params);
-      }
-    };
-    dsbridge.call('syncCalendar', params, cb);
-  }
-
-  // 调用 native 接口出错向 sentry 发送错误信息
-  private errorReport(errorMsg: string, methodName: string, params: any) {
-    if (window.$sentry) {
-      const errorInfo: NativeApiErrorInfo = {
-        error: new Error(errorMsg),
-        type: 'callNative',
-        methodName,
-        params: JSON.stringify(params)
-      };
-      window.$sentry.log(errorInfo);
-    }
-  }
-}
-
-/**
- * @param {platforms} - 接口限制的平台
- * @return {Function} - 装饰器
- */
-function p(platforms = ['android', 'ios']) {
-  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
-    if (!platforms.includes(window.$platform)) {
-      descriptor.value = () => {
-        return Vue.prototype.$toast(
-          `当前处在 ${window.$platform} 环境，无法调用接口哦`
-        );
-      };
-    }
-
-    return descriptor;
-  };
-}
-```
-
-另外推荐一个笔者之前写的一个基于安卓平台实现的教学版 [JSBridge](https://github.com/mcuking/JSBridge)，里面详细阐述了如何基于底层接口一步步封装一个可用的 JSBridge：
-
-[JSBridge 实现原理](https://github.com/mcuking/JSBridge)
-
-## 页面状态保持
-
-[router-view](https://router.vuejs.org/zh/guide/essentials/nested-routes.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
-
-[scrollBehavior](https://router.vuejs.org/zh/guide/advanced/scroll-behavior.html#%E6%BB%9A%E5%8A%A8%E8%A1%8C%E4%B8%BA)
-
-[scrollTop](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/scrollTop)
-
-[keep-alive](https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%9C%A8%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E4%B8%8A%E4%BD%BF%E7%94%A8-keep-alive)
-
-和上面 `页面导航管理` 部分解决的问题相同：当从 A 页面进入 B 页面再返回时，A 页面滑动位置、条件选择、输入内容等状态均要保持。之所以会单独开一个部分来讲，是因为实际项目中可能并不需要如此重的导航管理器，引入后可能还会引起一些问题，所以可以选择部分较轻量的方案。
-
-首先最先想到的可能是 vue 提供的 keep-alive，对页面实例进行缓存，返回时恢复实例即可（上面的 `页面导航管理` 部分前两个库也是基于 keep-alive 的）。如果遇到需求是：从 A 页面进入 B 页面不需要缓存 B，从 C 页面进入 B 页面需要缓存 B，那么可以将缓存的组件名保存在 vuex 上，然后在 vue-router 路由切换时，根据路由的 from 和 to 的不同来动态增删 vuex 上保存的需要缓存的组件名。具体做法可参考笔者之前写的文章 [keep-alive + vuex + vue-router 实现动态缓存 h5 页面](https://github.com/mcuking/blog/issues/41)。
-
-其次如果只考虑保持页面的滑动位置，可以将页面中需要记住位置的元素 scrollTop 值保存到 vuex  或 sessionStorage 中，key 可以是页面路由，或者再加上页面某个元素的标记，当返回该页面，则取出对应的 scrollTop 值，给整个页面或者其中部分元素重新设置上即可。
-
-不过这种手动记录和恢复的方式显得过于繁琐，而 vue-router 提供的 scrollBehavior 方法，则只需在全局配置一次，即可实现记住页面位置。具体代码如下：
-
-```js
-scrollBehavior (to, from, savedPosition) {
-  if (savedPosition) {
-    return savedPosition
-  } else {
-    return { x: 0, y: 0 }
-  }
-}
-```
-
-但是该方式的缺陷有两点：
-
-1. 需要限定 vue-router 为 history 模式
-
-2. 只能记住整体页面的位置（例如当列表仅仅是页面的一部分，则无法保持位置）
-
-另外如果还需要保持的表单数据等组件 data 中的值，也可以通过 mixin + sessionStorage/localStorage 来实现自动保存和恢复，具体做法可参考笔者之前写的文章 [react-hooks + vue mixin 实现 h5 表单数据自动存储](https://github.com/mcuking/blog/issues/42)
-
-上面提到的方式或多或少都有些缺陷，有没有更好的方式呢？
-
-当然有，最后推荐一种比较完美的方式：`<router-view>`，即路由嵌套。通俗点说就是可以在 A 页面上再覆盖 B 页面，在 B 页面再覆盖 C 页面，而被覆盖的页面并没有销毁，类似安卓原生开发中一个 activity 覆盖另一个 ativity，从而不需要记录和恢复上一个被销毁的页面状态了。
-
-这种方式的另一个好处是，多个页面在路由栈都是有记录的，当从 A 页面进入到 B 页面，然后触发系统返回事件时，会返回到 A 页面。相反如果使用弹出层 popup 来实现 B 页面在弹出层然后整体覆盖 A 页面，触发系统返回时，则会返回到 A 页面的上个页面，因为 B 页面在路由栈中并没有记录。
-
-`<router-view>` 具体实现比较简单，仅需要将 `<router-view>` 设置成 absolute 定位并覆盖整个屏幕，在这里就不赘述了，可以参考目前项目的代码。
-
-## 请求数据缓存
-
-[mem](https://github.com/sindresorhus/mem)
-
-在我们的应用中，会存在一些很少改动的数据，而这些数据有需要从后端获取，比如公司人员、公司职位分类等，此类数据在很长一段时间时不会改变的，而每次打开页面或切换页面时，就重新向后端请求。为了能够减少不必要请求，加快页面渲染速度，可以引用 mem 缓存库。
-
-mem 基本原理是通过以接收的函数为 key 创建一个 WeakMap，然后再以函数参数为 key 创建一个 Map，value 就是函数的执行结果，同时将这个 Map 作为刚刚的 WeakMap 的 value 形成嵌套关系，从而实现对同一个函数不同参数进行缓存。而且支持传入 maxAge，即数据的有效期，当某个数据到达有效期后，会自动销毁，避免内存泄漏。
-
-选择 WeakMap 是因为其相对 Map 保持对键名所引用的对象是弱引用，即垃圾回收机制不将该引用考虑在内。只要所引用的对象的其他引用都被清除，垃圾回收机制就会释放该对象所占用的内存。也就是说，一旦不再需要，WeakMap 里面的键名对象和所对应的键值对会自动消失，不用手动删除引用。
-
-mem 作为高阶函数，可以直接接受封装好的接口请求。但是为了更加直观简便，我们可以按照类的形式集成我们的接口函数，然后就可以用装饰器的方式使用 mem 了（装饰器只能修饰类和类的类的方法，因为普通函数会存在变量提升）。下面是相关代码：
-
-```ts
-import http from '../http';
-import mem from 'mem';
-
-/**
- * @param {MemOption} - mem 配置项
- * @return {Function} - 装饰器
- */
-export default function m(options: AnyObject) {
-  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
-    const oldValue = descriptor.value;
-    descriptor.value = mem(oldValue, options);
-    return descriptor;
-  };
-}
-
-export class CommonService {
-  @m({ maxAge: 60 * 1000 })
-  public async getQuoteList(): Promise<IQuote[]> {
-    const {
-      data: { list }
-    } = await http({
-      method: 'post',
-      url: '/quote/getList',
-      data: {}
-    });
-
-    return list;
-  }
-}
-```
-
 ## 离线包
 
 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)
@@ -642,6 +424,7 @@ preload-routes 是目前笔者所在团队使用的微前端方案，下面介�
 最终效果：将整个前端项目分解成一个主项目和多个子项目的结构
 
 1、子项目**按照 vue-cli 3 的 library 模式进行打包**，以便后续主项目引用
+
 注：在 library 模式中，Vue 是外置的。这意味着包中不会有 Vue，即便你在代码中导入了 Vue。如果这个库会通过一个打包器使用，它将尝试通过打包器以依赖的方式加载 Vue；否则就会回退到一个全局的 Vue 变量。
 
 2、在编译主项目的时候，**通过 InsertScriptPlugin 插件将子项目的入口文件 main.js 以 script 标签形式插入到主项目的 html 中**
@@ -684,7 +467,7 @@ const PROXY = {
 
 4、当浏览器解析 html 时，解析并执行子项目的 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中
 
-子项目 main.js 代码如下（为了尽量较少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由注册）
+子项目 main.js 代码如下（为了尽量减少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由注册）
 
 ```js
 import Vue from 'vue';
@@ -729,29 +512,375 @@ export default new Router({
 
 但它的优势在于方案逻辑清晰，对已有项目的侵入性较小。
 
-## Webpack 策略
+## JSBridge
 
-### 基础库抽离
+[DSBridge-IOS](https://github.com/wendux/DSBridge-IOS)
 
-对于一些基础库，例如 vue、moment 等，属于不经常变化的静态依赖，一般需要抽离出来以提升每次构建的效率。目前主流方案有两种：
+[DSBridge-Android](https://github.com/wendux/DSBridge-Android)
 
-一种是使用 [webpack-dll-plugin](https://webpack.docschina.org/plugins/dll-plugin/) 插件，在首次构建时就讲这些静态依赖单独打包，后续只需引入早已打包好的静态依赖包即可；
+[WebViewJavascriptBridge](https://github.com/marcuswestin/WebViewJavascriptBridge)
 
-另一种就是外部扩展 [Externals](https://webpack.docschina.org/configuration/externals/) 方式，即把不需要打包的静态资源从构建中剔除，使用 CDN 方式引入。下面是 webpack-dll-plugin 相对 Externals 的缺点：
+混合应用中一般都是通过 webview 加载网页，而当网页要获取设备能力（例如调用摄像头、本地日历等）或者 native 需要调用网页里的方法，就需要通过 JSBridge 进行通信。
 
-1. 需要配置在每次构建时都不参与编译的静态依赖，并在首次构建时为它们预编译出一份 JS 文件（后文将称其为 lib 文件），每次更新依赖需要手动进行维护，一旦增删依赖或者变更资源版本忘记更新，就会出现 Error 或者版本错误。
+开源社区中有很多功能强大的 JSBridge，例如上面列举的库。本项目基于保持 iOS android 平台接口统一原因，采用了 DSBridge，各位可以选择适合自己项目的工具。
 
-2. 无法接入浏览器的新特性 script type="module"，对于某些依赖库提供的原生 ES Modules 的引入方式（比如 vue 的新版引入方式）无法得到支持，没法更好地适配高版本浏览器提供的优良特性以实现更好地性能优化。
+本项目以 h5 调用 native 提供的同步日历接口为例，演示如何在 dsbridge 基础上进行两端通信的。下面是两端的关键代码摘要：
 
-3. 将所有资源预编译成一份文件，并将这份文件显式注入项目构建的 HTML 模板中，这样的做法，在 HTTP1 时代是被推崇的，因为那样能减少资源的请求数量，但在 HTTP2 时代如果拆成多个 CDN Link，就能够更充分地利用 HTTP2 的多路复用特性。
+安卓端同步日历核心代码，具体代码请查看与本项目配套的安卓项目 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)：
 
-不过选择 Externals 还是需要一个靠谱的 CDN 服务的。
+```java
+public class JsApi {
+    /**
+     * 同步日历接口
+     * msg 格式如下：
+     * ...
+     */
+    @JavascriptInterface
+    public void syncCalendar(Object msg, CompletionHandler<Integer> handler) {
+        try {
+            JSONObject obj = new JSONObject(msg.toString());
+            String id = obj.getString("id");
+            String title = obj.getString("title");
+            String location = obj.getString("location");
+            long startTime = obj.getLong("startTime");
+            long endTime = obj.getLong("endTime");
+            JSONArray earlyRemindTime = obj.getJSONArray("alarm");
+            String res = CalendarReminderUtils.addCalendarEvent(id, title, location, startTime, endTime, earlyRemindTime);
+            handler.complete(Integer.valueOf(res));
+        } catch (Exception e) {
+            e.printStackTrace();
+            handler.complete(6005);
+        }
+    }
+}
+```
 
-本项目选择的是 Externals，各位可根据项目需求选择不同的方案。
+h5 端同步日历核心代码（通过装饰器来限制调用接口的平台）
 
-更多内容请查看这篇文章（上面观点来自于这篇文章）：
+```ts
+class NativeMethods {
+  // 同步到日历
+  @p()
+  public syncCalendar(params: SyncCalendarParams) {
+    const cb = (errCode: number) => {
+      const msg = NATIVE_ERROR_CODE_MAP[errCode];
 
-[Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
+      Vue.prototype.$toast(msg);
+
+      if (errCode !== 6000) {
+        this.errorReport(msg, 'syncCalendar', params);
+      }
+    };
+    dsbridge.call('syncCalendar', params, cb);
+  }
+
+  // 调用 native 接口出错向 sentry 发送错误信息
+  private errorReport(errorMsg: string, methodName: string, params: any) {
+    if (window.$sentry) {
+      const errorInfo: NativeApiErrorInfo = {
+        error: new Error(errorMsg),
+        type: 'callNative',
+        methodName,
+        params: JSON.stringify(params)
+      };
+      window.$sentry.log(errorInfo);
+    }
+  }
+}
+
+/**
+ * @param {platforms} - 接口限制的平台
+ * @return {Function} - 装饰器
+ */
+function p(platforms = ['android', 'ios']) {
+  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
+    if (!platforms.includes(window.$platform)) {
+      descriptor.value = () => {
+        return Vue.prototype.$toast(
+          `当前处在 ${window.$platform} 环境，无法调用接口哦`
+        );
+      };
+    }
+
+    return descriptor;
+  };
+}
+```
+
+另外推荐一个笔者之前写的一个基于安卓平台实现的教学版 [JSBridge](https://github.com/mcuking/JSBridge)，里面详细阐述了如何基于底层接口一步步封装一个可用的 JSBridge：
+
+[JSBridge 实现原理](https://github.com/mcuking/JSBridge)
+
+## 异常监控平台
+
+[sentry](https://github.com/getsentry/sentry)
+
+[fundebug](https://www.fundebug.com/)
+
+移动端网页相对 PC 端，主要有设备众多，网络条件各异，调试困难等特点。导致如下问题：
+
+- 设备兼容或网络异常导致只有部分情况下才出现的 bug，测试无法全面覆盖
+
+- 无法获取出现 bug 的用户的设备，又不能复现反馈的 bug
+
+- 部分 bug 只出现几次，后面无法复现，不能还原事故现场
+
+这时就非常需要一个异常监控平台，将异常实时上传到平台，并及时通知相关人员。
+
+相关工具有 sentry，fundebug 等，其中 sentry 因为功能强大，支持多平台监控（不仅可以监控前端项目），完全开源，可以私有化部署等特点，而被广泛采纳。
+
+下面是 sentry 在本项目应用时使用的相关配套工具。
+
+**sentry 针对 javascript 的 sdk**
+
+[sentry-javascript](https://github.com/getsentry/sentry-javascript)
+
+**自动上传 sourcemap 的 webpack 插件**
+
+[sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)
+
+**编译时自动在 try catch 中添加错误上报函数的 babel 插件**
+
+[babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)
+
+**补充：**
+
+前端的异常主要有以下几个部分：
+
+- 静态资源加载异常
+
+- 接口异常（包括与后端和 native 的接口）
+
+- js 报错
+
+- 网页崩溃
+
+其中静态资源加载失败，可以通过 window.addEventListener('error', ..., true) 在事件捕获阶段获取，然后筛选出资源加载失败的错误并手动上报错误。核心代码如下：
+
+```ts
+// 全局监控资源加载错误
+window.addEventListener(
+  'error',
+  (event) => {
+    // 过滤 js error
+    const target = event.target || event.srcElement;
+    const isElementTarget =
+      target instanceof HTMLScriptElement ||
+      target instanceof HTMLLinkElement ||
+      target instanceof HTMLImageElement;
+    if (!isElementTarget) {
+      return false;
+    }
+    // 上报资源地址
+    const url =
+      (target as HTMLScriptElement | HTMLImageElement).src ||
+      (target as HTMLLinkElement).href;
+
+    this.log({
+      error: new Error(`ResourceLoadError: ${url}`),
+      type: 'resource load'
+    });
+  },
+  true
+);
+```
+
+关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数（native 接口的错误上报类似，可在项目中查看）。核心代码如下：
+
+```ts
+function errorReport(
+  url: string,
+  error: string | Error,
+  requestOptions: AxiosRequestConfig,
+  response?: AnyObject
+) {
+  if (window.$sentry) {
+    const errorInfo: RequestErrorInfo = {
+      error: typeof error === 'string' ? new Error(error) : error,
+      type: 'request',
+      requestUrl: url,
+      requestOptions: JSON.stringify(requestOptions)
+    };
+
+    if (response) {
+      errorInfo.response = JSON.stringify(response);
+    }
+
+    window.$sentry.log(errorInfo);
+  }
+}
+```
+
+关于全局 js 报错，sentry 针对的前端的 sdk 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
+
+需要注意的是其中 window.onerror = (message, source, lineno, colno, error) =>{} 不同于 window.addEventListener('error', ...)，window.onerror 捕获的信息更丰富，包括了错误字符串信息、发生错误的 js 文件，错误所在的行数、列数、和 Error 对象（其中还会有调用堆栈信息等）。所以 sentry 会选择 window.onerror 进行 js 全局监控。
+
+但有一种错误是 window.onerror 监听不到的，那就是 unhandledrejection 错误，这个错误是当 promise reject 后没有 catch 住所引起的。当然 sentry 的 sdk 也已经做了监听。
+
+针对 vue 项目，也可对 errorHandler 钩子进行全局监听，react 的话可以通过 componentDidCatch 钩子，vue 相关代码如下：
+
+```ts
+// 全局监控 Vue errorHandler
+Vue.config.errorHandler = (error, vm, info) => {
+  window.$sentry.log({
+    error,
+    type: 'vue errorHandler',
+    vm,
+    info
+  });
+};
+```
+
+但是对于我们业务中，经常会对一些可能报错的代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
+
+```js
+if (!IS_DEV) {
+  plugins.push([
+    'try-catch-error-report',
+    {
+      expression: 'window.$sentry.log',
+      needFilename: true,
+      needLineNo: true,
+      needColumnNo: false,
+      needContext: true,
+      exclude: ['node_modules']
+    }
+  ]);
+}
+```
+
+针对跨域 js 问题，当加载的不同域的 js 文件时，例如通过 cdn 加载打包后的 js。如果 js 报错，window.onerror 只能捕获到 script error，没有任何有效信息能帮助我们定位问题。此时就需要我们做一些事情：
+第一步、服务端需要在返回 js 的返回头设置 Access-Control-Allow-Origin: \*
+第二部、设置 script 标签属性 crossorigin，代码如下：
+
+```html
+<script src="http://helloworld/main.js" crossorigin></script>
+```
+
+如果是动态添加的，也可动态设置：
+
+```js
+const script = document.createElement('script');
+script.crossOrigin = 'anonymous';
+script.src = url;
+document.body.appendChild(script);
+```
+
+针对网页崩溃问题，推荐一个基于 service work 的监控方案，相关文章已列在下面的。如果是 webview 加载网页，也可以通过 webview 加载失败的钩子监控网页崩溃等。
+
+[如何监控网页崩溃？](https://juejin.im/entry/5be158116fb9a049c6434f4a)
+
+最后，因为部署到线上的代码一般都是经过压缩混淆的，如果没有上传 sourcemap 的话，是无法定位到具体源码的，可以现在 项目中添加 .sentryclirc 文件，其中内容可参考本项目的 .sentryclirc，然后通过 sentry-cli (需要全局全装 sentry-cli 即`npm install sentry-cli`)命令行工具进行上传，命令如下：
+
+```
+sentry-cli releases -o 机构名 -p 项目名 files 版本 upload-sourcemaps sourcemap 文件相对位置 --url-prefix js 在线上相对根目录的位置 --rewrite
+// 示例
+sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps dist/js --url-prefix '~/js/' --rewrite
+```
+
+当然官方也提供了 webpack 插件 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)，当打包时触发 webpack 的 after-emit 事件钩子（即生成资源到 output 目录之后），插件会自动上传打包目录中的 sourcemap 和关联的 js，相关配置可参考本项目的 vue.config.js 文件。
+
+通常为了安全，是不允许在线上部署 sourcemap 文件的，所以上传 sourcemap 到 sentry 后，可手动删除线上 sourcemap 文件。
+
+## 页面状态保持
+
+[router-view](https://router.vuejs.org/zh/guide/essentials/nested-routes.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
+
+[scrollBehavior](https://router.vuejs.org/zh/guide/advanced/scroll-behavior.html#%E6%BB%9A%E5%8A%A8%E8%A1%8C%E4%B8%BA)
+
+[scrollTop](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/scrollTop)
+
+[keep-alive](https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%9C%A8%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E4%B8%8A%E4%BD%BF%E7%94%A8-keep-alive)
+
+场景描述：当从 A 页面进入 B 页面再返回时，A 页面滑动位置、条件选择、输入内容等状态均要保持。
+
+### keep-alive
+
+首先最先想到的可能是 vue 提供的 keep-alive，对页面实例进行缓存，返回时恢复实例即可（上面的 `页面导航管理` 部分前两个库也是基于 keep-alive 的）。如果遇到需求是：从 A 页面进入 B 页面不需要缓存 B，从 C 页面进入 B 页面需要缓存 B，那么可以将缓存的组件名保存在 vuex 上，然后在 vue-router 路由切换时，根据路由的 from 和 to 的不同来动态增删 vuex 上保存的需要缓存的组件名。具体做法可参考笔者之前写的文章 [keep-alive + vuex + vue-router 实现动态缓存 h5 页面](https://github.com/mcuking/blog/issues/41)。
+
+### scrollBehavior
+
+其次如果只考虑保持页面的滑动位置，可以将页面中需要记住位置的元素 scrollTop 值保存到 vuex  或 sessionStorage 中，key 可以是页面路由，或者再加上页面某个元素的标记，当返回该页面，则取出对应的 scrollTop 值，给整个页面或者其中部分元素重新设置上即可。
+
+不过这种手动记录和恢复的方式显得过于繁琐，而 vue-router 提供的 scrollBehavior 方法，则只需在全局配置一次，即可实现记住页面位置。具体代码如下：
+
+```js
+scrollBehavior (to, from, savedPosition) {
+  if (savedPosition) {
+    return savedPosition
+  } else {
+    return { x: 0, y: 0 }
+  }
+}
+```
+
+但是该方式的缺陷有两点：
+
+1. 需要限定 vue-router 为 history 模式
+
+2. 只能记住整体页面的位置（例如当列表仅仅是页面的一部分，则无法保持位置）
+
+另外如果还需要保持的表单数据等组件 data 中的值，也可以通过 mixin + sessionStorage/localStorage 来实现自动保存和恢复，具体做法可参考笔者之前写的文章 [react-hooks + vue mixin 实现 h5 表单数据自动存储](https://github.com/mcuking/blog/issues/42)
+
+### router-view
+
+上面提到的方式或多或少都有些缺陷，有没有更好的方式呢？
+
+当然有，最后推荐一种比较完美的方式：`<router-view>`，即路由嵌套。通俗点说就是可以在 A 页面上再覆盖 B 页面，在 B 页面再覆盖 C 页面，而被覆盖的页面并没有销毁，类似安卓原生开发中一个 activity 覆盖另一个 ativity，从而不需要记录和恢复上一个被销毁的页面状态了。
+
+这种方式的另一个好处是，多个页面在路由栈都是有记录的，当从 A 页面进入到 B 页面，然后触发系统返回事件时，会返回到 A 页面。相反如果使用弹出层 popup 来实现 B 页面在弹出层然后整体覆盖 A 页面，触发系统返回时，则会返回到 A 页面的上个页面，因为 B 页面在路由栈中并没有记录。
+
+`<router-view>` 方案原理如下：
+
+首先是在 A 页面模板中插入 `<router-view>` 标签，然后设置 B 页面为 A 页面的子路由；
+
+然后将 `<router-view>` 设置成 fixed 定位并覆盖整个屏幕，调高 z-index；
+
+当匹配到子路由的时候，会在 `<router-view>` 出渲染 B 页面，同时 A 页面不会销毁，而是被 B 页面完整覆盖。
+
+## 请求数据缓存
+
+[mem](https://github.com/sindresorhus/mem)
+
+在我们的应用中，会存在一些很少改动的数据，而这些数据有需要从后端获取，比如公司人员、公司职位分类等，此类数据在很长一段时间时不会改变的，而每次打开页面或切换页面时，就重新向后端请求。为了能够减少不必要请求，加快页面渲染速度，可以引用 mem 缓存库。
+
+mem 基本原理是通过以接收的函数为 key 创建一个 WeakMap，然后再以函数参数为 key 创建一个 Map，value 就是函数的执行结果，同时将这个 Map 作为刚刚的 WeakMap 的 value 形成嵌套关系，从而实现对同一个函数不同参数进行缓存。而且支持传入 maxAge，即数据的有效期，当某个数据到达有效期后，会自动销毁，避免内存泄漏。
+
+选择 WeakMap 是因为其相对 Map 保持对键名所引用的对象是弱引用，即垃圾回收机制不将该引用考虑在内。只要所引用的对象的其他引用都被清除，垃圾回收机制就会释放该对象所占用的内存。也就是说，一旦不再需要，WeakMap 里面的键名对象和所对应的键值对会自动消失，不用手动删除引用。
+
+mem 作为高阶函数，可以直接接受封装好的接口请求。但是为了更加直观简便，我们可以按照类的形式集成我们的接口函数，然后就可以用装饰器的方式使用 mem 了（装饰器只能修饰类和类的类的方法，因为普通函数会存在变量提升）。下面是相关代码：
+
+```ts
+import http from '../http';
+import mem from 'mem';
+
+/**
+ * @param {MemOption} - mem 配置项
+ * @return {Function} - 装饰器
+ */
+export default function m(options: AnyObject) {
+  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
+    const oldValue = descriptor.value;
+    descriptor.value = mem(oldValue, options);
+    return descriptor;
+  };
+}
+
+export class CommonService {
+  @m({ maxAge: 60 * 1000 })
+  public async getQuoteList(): Promise<IQuote[]> {
+    const {
+      data: { list }
+    } = await http({
+      method: 'post',
+      url: '/quote/getList',
+      data: {}
+    });
+
+    return list;
+  }
+}
+```
 
 ## 样式适配
 
@@ -958,235 +1087,29 @@ export default {
 
 [使用 require.context 实现前端工程自动化](https://www.jianshu.com/p/c894ea00dfec)
 
-## 异常监控平台
+## Webpack 策略
 
-[sentry](https://github.com/getsentry/sentry)
+### 基础库抽离
 
-[fundebug](https://www.fundebug.com/)
+对于一些基础库，例如 vue、moment 等，属于不经常变化的静态依赖，一般需要抽离出来以提升每次构建的效率。目前主流方案有两种：
 
-移动端网页相对 PC 端，主要有设备众多，网络条件各异，调试困难等特点。导致如下问题：
+一种是使用 [webpack-dll-plugin](https://webpack.docschina.org/plugins/dll-plugin/) 插件，在首次构建时就讲这些静态依赖单独打包，后续只需引入早已打包好的静态依赖包即可；
 
-- 设备兼容或网络异常导致只有部分情况下才出现的 bug，测试无法全面覆盖
+另一种就是外部扩展 [Externals](https://webpack.docschina.org/configuration/externals/) 方式，即把不需要打包的静态资源从构建中剔除，使用 CDN 方式引入。下面是 webpack-dll-plugin 相对 Externals 的缺点：
 
-- 无法获取出现 bug 的用户的设备，又不能复现反馈的 bug
+1. 需要配置在每次构建时都不参与编译的静态依赖，并在首次构建时为它们预编译出一份 JS 文件（后文将称其为 lib 文件），每次更新依赖需要手动进行维护，一旦增删依赖或者变更资源版本忘记更新，就会出现 Error 或者版本错误。
 
-- 部分 bug 只出现几次，后面无法复现，不能还原事故现场
+2. 无法接入浏览器的新特性 script type="module"，对于某些依赖库提供的原生 ES Modules 的引入方式（比如 vue 的新版引入方式）无法得到支持，没法更好地适配高版本浏览器提供的优良特性以实现更好地性能优化。
 
-这时就非常需要一个异常监控平台，将异常实时上传到平台，并及时通知相关人员。
+3. 将所有资源预编译成一份文件，并将这份文件显式注入项目构建的 HTML 模板中，这样的做法，在 HTTP1 时代是被推崇的，因为那样能减少资源的请求数量，但在 HTTP2 时代如果拆成多个 CDN Link，就能够更充分地利用 HTTP2 的多路复用特性。
 
-相关工具有 sentry，fundebug 等，其中 sentry 因为功能强大，支持多平台监控（不仅可以监控前端项目），完全开源，可以私有化部署等特点，而被广泛采纳。
+不过选择 Externals 还是需要一个靠谱的 CDN 服务的。
 
-下面是 sentry 在本项目应用时使用的相关配套工具。
+本项目选择的是 Externals，各位可根据项目需求选择不同的方案。
 
-**sentry 针对 javascript 的 sdk**
+更多内容请查看这篇文章（上面观点来自于这篇文章）：
 
-[sentry-javascript](https://github.com/getsentry/sentry-javascript)
-
-**自动上传 sourcemap 的 webpack 插件**
-
-[sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)
-
-**编译时自动在 try catch 中添加错误上报函数的 babel 插件**
-
-[babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)
-
-**补充：**
-
-前端的异常主要有以下几个部分：
-
-- 静态资源加载异常
-
-- 接口异常（包括与后端和 native 的接口）
-
-- js 报错
-
-- 网页崩溃
-
-其中静态资源加载失败，可以通过 window.addEventListener('error', ..., true) 在事件捕获阶段获取，然后筛选出资源加载失败的错误并手动上报错误。核心代码如下：
-
-```ts
-// 全局监控资源加载错误
-window.addEventListener(
-  'error',
-  (event) => {
-    // 过滤 js error
-    const target = event.target || event.srcElement;
-    const isElementTarget =
-      target instanceof HTMLScriptElement ||
-      target instanceof HTMLLinkElement ||
-      target instanceof HTMLImageElement;
-    if (!isElementTarget) {
-      return false;
-    }
-    // 上报资源地址
-    const url =
-      (target as HTMLScriptElement | HTMLImageElement).src ||
-      (target as HTMLLinkElement).href;
-
-    this.log({
-      error: new Error(`ResourceLoadError: ${url}`),
-      type: 'resource load'
-    });
-  },
-  true
-);
-```
-
-关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数（native 接口的错误上报类似，可在项目中查看）。核心代码如下：
-
-```ts
-function errorReport(
-  url: string,
-  error: string | Error,
-  requestOptions: AxiosRequestConfig,
-  response?: AnyObject
-) {
-  if (window.$sentry) {
-    const errorInfo: RequestErrorInfo = {
-      error: typeof error === 'string' ? new Error(error) : error,
-      type: 'request',
-      requestUrl: url,
-      requestOptions: JSON.stringify(requestOptions)
-    };
-
-    if (response) {
-      errorInfo.response = JSON.stringify(response);
-    }
-
-    window.$sentry.log(errorInfo);
-  }
-}
-```
-
-关于全局 js 报错，sentry 针对的前端的 sdk 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
-
-需要注意的是其中 window.onerror = (message, source, lineno, colno, error) =>{} 不同于 window.addEventListener('error', ...)，window.onerror 捕获的信息更丰富，包括了错误字符串信息、发生错误的 js 文件，错误所在的行数、列数、和 Error 对象（其中还会有调用堆栈信息等）。所以 sentry 会选择 window.onerror 进行 js 全局监控。
-
-但有一种错误是 window.onerror 监听不到的，那就是 unhandledrejection 错误，这个错误是当 promise reject 后没有 catch 住所引起的。当然 sentry 的 sdk 也已经做了监听。
-
-针对 vue 项目，也可对 errorHandler 钩子进行全局监听，react 的话可以通过 componentDidCatch 钩子，vue 相关代码如下：
-
-```ts
-// 全局监控 Vue errorHandler
-Vue.config.errorHandler = (error, vm, info) => {
-  window.$sentry.log({
-    error,
-    type: 'vue errorHandler',
-    vm,
-    info
-  });
-};
-```
-
-但是对于我们业务中，经常会对一些可能报错的代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
-
-```js
-if (!IS_DEV) {
-  plugins.push([
-    'try-catch-error-report',
-    {
-      expression: 'window.$sentry.log',
-      needFilename: true,
-      needLineNo: true,
-      needColumnNo: false,
-      needContext: true,
-      exclude: ['node_modules']
-    }
-  ]);
-}
-```
-
-针对跨域 js 问题，当加载的不同域的 js 文件时，例如通过 cdn 加载打包后的 js。如果 js 报错，window.onerror 只能捕获到 script error，没有任何有效信息能帮助我们定位问题。此时就需要我们做一些事情：
-第一步、服务端需要在返回 js 的返回头设置 Access-Control-Allow-Origin: \*
-第二部、设置 script 标签属性 crossorigin，代码如下：
-
-```html
-<script src="http://helloworld/main.js" crossorigin></script>
-```
-
-如果是动态添加的，也可动态设置：
-
-```js
-const script = document.createElement('script');
-script.crossOrigin = 'anonymous';
-script.src = url;
-document.body.appendChild(script);
-```
-
-针对网页崩溃问题，推荐一个基于 service work 的监控方案，相关文章已列在下面的。如果是 webview 加载网页，也可以通过 webview 加载失败的钩子监控网页崩溃等。
-
-[如何监控网页崩溃？](https://juejin.im/entry/5be158116fb9a049c6434f4a)
-
-最后，因为部署到线上的代码一般都是经过压缩混淆的，如果没有上传 sourcemap 的话，是无法定位到具体源码的，可以现在 项目中添加 .sentryclirc 文件，其中内容可参考本项目的 .sentryclirc，然后通过 sentry-cli (需要全局全装 sentry-cli 即`npm install sentry-cli`)命令行工具进行上传，命令如下：
-
-```
-sentry-cli releases -o 机构名 -p 项目名 files 版本 upload-sourcemaps sourcemap 文件相对位置 --url-prefix js 在线上相对根目录的位置 --rewrite
-// 示例
-sentry-cli releases -o mcukingdom -p hello-world files 0.2.1 upload-sourcemaps dist/js --url-prefix '~/js/' --rewrite
-```
-
-当然官方也提供了 webpack 插件 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)，当打包时触发 webpack 的 after-emit 事件钩子（即生成资源到 output 目录之后），插件会自动上传打包目录中的 sourcemap 和关联的 js，相关配置可参考本项目的 vue.config.js 文件。
-
-通常为了安全，是不允许在线上部署 sourcemap 文件的，所以上传 sourcemap 到 sentry 后，可手动删除线上 sourcemap 文件。
-
-## 通过 UA 获取设备信息
-
-在开发 h5 开发时，可能会遇到下面几种情况：
-
-1. 开发时都是在浏览器进行开发调试的，所以需要避免调用 native 的接口，因为这些接口在浏览器环境根本不存在；
-2. 有些情况需要区分所在环境是在 android webview 还是 ios webview，做一些针对特定平台的处理；
-3. 当 h5 版本已经更新，但是客户端版本并没有同步更新，那么如果之间的接口调用发生了改变，就会出现调用出错。
-
-所以需要一种方式来检测页面当前所处设备的平台类型、app 版本、系统版本等，目前比较靠谱的方式是通过 android / ios webview 修改 UserAgent，在原有的基础上加上特定后缀，然后在网页就可以通过 UA 获取设备相关信息了。当然这种方式的前提是 native 代码是可以为此做出改动的。以安卓为例关键代码如下：
-
-安卓关键代码：
-
-```java
-// Activity -> onCreate
-...
-// 获取 app 版本
-PackageManager packageManager = getPackageManager();
-PackageInfo packInfo = null;
-try {
-  // getPackageName()是你当前类的包名，0代表是获取版本信息
-  packInfo = packageManager.getPackageInfo(getPackageName(),0);
-} catch (PackageManager.NameNotFoundException e) {
-  e.printStackTrace();
-}
-String appVersion = packInfo.versionName;
-
-// 获取系统版本
-String systemVersion = android.os.Build.VERSION.RELEASE;
-
-mWebSettings.setUserAgentString(
-  mWebSettings.getUserAgentString() + " DSBRIDGE_"  + appVersion + "_" + systemVersion + "_android"
-);
-```
-
-h5 关键代码：
-
-```ts
-const initDeviceInfo = () => {
-  const UA = navigator.userAgent;
-  const info = UA.match(/\s{1}DSBRIDGE[\w\.]+$/g);
-  if (info && info.length > 0) {
-    const infoArray = info[0].split('_');
-    window.$appVersion = infoArray[1];
-    window.$systemVersion = infoArray[2];
-    window.$platform = infoArray[3] as Platform;
-  } else {
-    window.$appVersion = undefined;
-    window.$systemVersion = undefined;
-    window.$platform = 'browser';
-  }
-};
-```
-
-## mock 数据
-
-[Mock](https://github.com/nuysoft/Mock)
-
-当前后端进度不一致，接口还尚未实现时，为了不影响彼此的进度，此时前后端约定好接口数据格式后，前端就可以使用 mock 数据进行独立开发了。本项目使用了 Mock 实现前端所需的接口。
+[Webpack 优化——将你的构建效率提速翻倍](https://juejin.im/post/5d614dc96fb9a06ae3726b3e)
 
 ## 调试控制台
 
