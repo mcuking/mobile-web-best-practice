@@ -8,18 +8,18 @@
 
 该 Todo 应用交互简洁实用，另外无需服务器，而是将数据保存到 webview 的 indexDB 中，可保证数据安全，欢迎在实际工作生活中使用。效果图如下：
 
-<img src="./assets/memo.gif" width=320/>
+<img src="https://i.loli.net/2020/02/29/oIO5UfnqlGgzmQ8.gif" width=320/>
 
-| 体验平台 | 二维码                                           | 链接                                            | 备注             |
-| -------- | ------------------------------------------------ | ----------------------------------------------- | ---------------- |
-| Web      | <img src="./assets/mwbp.png" width=140>          | [点击体验](https://www.mcuking.club)            |                  |
-| Android  | <img src="./assets/mwbpcontainer.png" width=140> | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
+| 体验平台 | 二维码                                                                    | 链接                                            | 备注             |
+| -------- | ------------------------------------------------------------------------- | ----------------------------------------------- | ---------------- |
+| Web      | <img src="https://i.loli.net/2020/02/29/ViNRUteSbY1IZPa.png"  width=140/> | [点击体验](https://www.mcuking.club)            |                  |
+| Android  | <img src="https://i.loli.net/2020/02/29/wEqfsCRKnI2XP7V.png" width=140/>  | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
 
-- [项目分层架构](#项目分层架构)
-- [离线包](#离线包)
+- [分层架构](#分层架构)
 - [微前端](#微前端)
+- [离线包](#离线包)
 - [JSBridge](#jsbridge)
 - [异常监控平台](#异常监控平台)
 - [页面状态保持](#页面状态保持)
@@ -33,7 +33,7 @@
 - [部署](#部署)
 - [常见问题](#常见问题)
 
-## 项目分层架构
+## 分层架构
 
 [react-clean-architecture](https://github.com/eduardomoroni/react-clean-architecture)
 
@@ -53,7 +53,7 @@
 
 针对上面所遇到的问题，笔者学习了一些关于 DDD（领域驱动设计）、Clean Architecture 等知识，并收集了类似思想在前端方面的实践资料，形成了下面这种前端分层架构：
 
-<img src="./assets/architecture.png" width=600/>
+<img src="https://i.loli.net/2020/02/29/5RhfH3BYMb9wIOs.png" width=600/>
 
 其中 View 层想必大家都很了解，就不在这里介绍了，重点介绍下下面三个层的含义：
 
@@ -259,6 +259,147 @@ class NoteInteractor {
 
 [领域驱动设计在前端中的应用](https://juejin.im/post/5d3926176fb9a07ef161c719)
 
+## 微前端
+
+[preload-routes](https://github.com/micro-frontends-vue/preload-routes)
+
+[qiankun](https://github.com/umijs/qiankun)
+
+### 背景介绍
+
+对于大型前端项目，比如公司内部管理系统（一般包括 OA、HR、会议预约、CRM 等系统），如果将所有歌业务放在一个前端项目里，随着业务功能不断增加，就会导致如下这些问题：
+
+- 代码规模庞大，导致编译时间过长，开发、打包速度越来越慢
+
+- 项目文件越来越多，导致查找相关文件变得越来越困难
+
+- 某一个业务的小改动，导致整个项目的打包和部署
+
+### 方案介绍
+
+preload-routes 是目前笔者所在团队使用的微前端方案，会将整个前端项目拆解成主项目和子项目，其中两者作用如下：
+
+- 主项目：用于管理子项目的路由切换、注册子项目的路由和全局 Store 层、提供全局库和方法
+
+- 子项目：用于开发子业务线业务代码，一个子项目对应一个子业务线，并且包含两端（PC + Mobile）代码和复用层代码（即上面项目分层中的非视图层）
+
+结合之前的分层架构实现复用非视图代码的方式，完整的方案如下图所示：
+
+<img src="https://i.loli.net/2020/02/29/Jyf3wAdbVkm5NGc.png" width=600/>
+
+如上图所示，将整个前端项目按照业务线拆分出多个子工程，每个子项目都是独立的仓库，只包含了单个业务线的代码，可以进行独立开发和部署，降低了项目维护的复杂度。
+
+采用这套方案，使得我们的前端项目不仅保有了横向上（多个子项目）的扩展性，又拥有了纵向上（单个子项目）的复用性。那么这套方案具体是怎么实现的呢？下面就详细说明方案的实现机制。
+
+### 实现机制
+
+下面具体介绍下其中的实现机制：
+
+1、子项目**按照 vue-cli 3 的 library 模式进行打包**，以便后续主项目引用
+
+注：在 library 模式中，Vue 是外置的。这意味着包中不会有 Vue，即便你在代码中导入了 Vue。如果这个库会通过一个打包器使用，它将尝试通过打包器以依赖的方式加载 Vue；否则就会回退到一个全局的 Vue 变量。
+
+2、在编译主项目的时候，**通过 InsertScriptPlugin 插件将子项目的入口文件 main.js 以 script 标签形式插入到主项目的 html 中**
+
+注：务必将子项目的入口文件 main.js 对应的 script 标签放在主项目入口文件 app.js 的 script 标签之上，这是为了确保子项目的入口文件先于主项目的入口文件代码执行，接下来的步骤就会明白为什么这么做。
+
+再注：本地开发环境下项目的入口文件编译后的 main.js 是保存在内存中的，所以磁盘上看不见，但是可以访问。
+
+InsertScriptPlugin 核心代码如下：
+
+```js
+compiler.hooks.compilation.tap('InsertScriptWebpackPlugin', (compilation) => {
+  compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing.tap(
+    'InsertScriptWebpackPlugin',
+    (htmlPluginData) => {
+      const {
+        assets: { js }
+      } = htmlPluginData;
+      // 将传入的 js 以 script 标签形式插入到 html 中
+      // 注意：需要将子项目的入口文件 main.js 放在主项目入口文件 app.js 之前，因为需要子项目提前将自己的 route list 注册到全局上
+      js.unshift(...self.files);
+    }
+  );
+});
+```
+
+3、主项目的 html 要访问子项目里的编译后的 js / css 等资源，需要进行**代理转发**
+
+- 如果是本地开发时，可以通过 webpack 提供的 proxy，例如：
+
+```js
+const PROXY = {
+  '/app-a/': {
+    target: 'http://localhost:10241/'
+  }
+};
+```
+
+- 如果是线上部署时，可以通过 nginx 转发或者将打包后的主项目和子项目放在一个文件夹中
+
+4、当浏览器解析 html 时，解析并执行子项目的 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中
+
+子项目 main.js 代码如下（为了尽量减少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由注册）
+
+```js
+import Vue from 'vue';
+import routes from './routes';
+
+const share = (Vue.__share__ = Vue.__share__ || {});
+const routesPool = (share.routes = share.routes || {});
+
+// 将子项目的 route list 挂载到 Vue.__share__.routes 上，以便后续主项目将其合并到总的路由中
+routesPool[process.env.VUE_APP_NAME] = routes;
+```
+
+5、继续向下解析，解析并执行主项目 main.js 时，**从 Vue.\_\_share\_\_.routes 获取所有子项目的 route list，合并到总的路由表中**，然后初始化一个 vue-router 实例，并传入到 new Vue 内
+
+相关关键代码如下
+
+```js
+// 从 Vue.__share__.routes 获取所有子项目的 route list，合并到总的路由表中
+const routes = Vue.__share__.routes;
+
+export default new Router({
+  routes: Object.values(routes).reduce((acc, prev) => acc.concat(prev), [
+    {
+      path: '/',
+      redirect: '/app-a'
+    }
+  ])
+});
+```
+
+到此就实现了单页面应用按照业务拆分成多个子项目，直白来说子项目的入口文件 main.js 就是将主项目和子项目联系起来的桥梁。
+
+另外如果需要使用 vuex，则和 vue-router 的顺序恰好相反（先主项目后子项目）：
+
+1、首先在主项目的入口文件中初始化一个 store 实例 new Vuex.Store，然后挂在到 Vue.\_\_share\_\_.store 上
+
+2、然后在子项目的 APP.vue 中获取到 Vue.\_\_share\_\_.store 并调用 store.registerModule(‘app-x', store)，将子项目的 store 作为子模块注册到 store 上
+
+### 优缺点
+
+下面谈下这套方案的优缺点：
+
+**优点**
+
+- 子项目可单独打包、单独部署上线，提升了开发和打包的速度
+
+- 子项目之间开发互相独立，互不影响，可在不同仓库进行维护，减少的单个项目的规模
+
+- 保持单页应用的体验，子项目之间切换不刷新
+
+- 改造成本低，对现有项目侵入度较低，业务线迁移成本也较低
+
+- 保证整体项目统一一个技术栈
+
+**缺点**：
+
+- 主项目和子项目需要共用一个 Vue 实例，所以无法做到某个子项目单独使用最新版 Vue（例如 Vue3）或者 React
+
+如果没有在一个大型前端项目中使用多个技术栈的需求，还是很推荐笔者目前团队实践的这个方案的。另外如果是 React 技术栈，也是可以按照这种思想去实现类似的方案的。
+
 ## 离线包
 
 [mobile-web-best-practice-container](https://github.com/mcuking/mobile-web-best-practice-container)
@@ -269,7 +410,7 @@ class NoteInteractor {
 
 离线包技术可以将网页的网络加载时间变为 0，极大提升应用的用户体验。原理如下图所示：
 
-<img src="./assets/offline-principle.png" width=600/>
+<img src="https://i.loli.net/2020/02/29/KdDCoHhMUj3TmvN.png" width=600/>
 
 我们可以先将页面需要的静态资源打包并预先加载到客户端的安装包中，当用户安装时，再将资源解压到本地存储中，当 WebView 加载某个 H5 页面时，拦截发出的所有 http 请求，查看请求的资源是否在本地存在，如果存在则直接返回资源。
 
@@ -412,105 +553,6 @@ public class OfflineWebViewClient extends WebViewClient {
 #### 4. 如果客户端离线包还没有下载完成，而静态资源服务器已经部署了最新的版本，那么是否会出现客户端展示的页面仍然是旧的版本呢？如果这次改动的是接口请求的变动，那岂不是还会引起接口报错？
 
 这个大可不必担心，上面的代码中如果 http 请求没有命中任何前端资源，则会放过该请求，让它去请求远端的服务器。因此即使本地离线包资源没有及时更新，仍然可以保证页面的静态资源是最新的。也就是说有一个兜底的方案，出了问题大不了回到原来的请求服务器的加载模式。
-
-## 微前端
-
-[preload-routes](https://github.com/micro-frontends-vue/preload-routes)
-
-[qiankun](https://github.com/umijs/qiankun)
-
-preload-routes 是目前笔者所在团队使用的微前端方案，下面介绍下其中的运行机制：
-
-最终效果：将整个前端项目分解成一个主项目和多个子项目的结构
-
-1、子项目**按照 vue-cli 3 的 library 模式进行打包**，以便后续主项目引用
-
-注：在 library 模式中，Vue 是外置的。这意味着包中不会有 Vue，即便你在代码中导入了 Vue。如果这个库会通过一个打包器使用，它将尝试通过打包器以依赖的方式加载 Vue；否则就会回退到一个全局的 Vue 变量。
-
-2、在编译主项目的时候，**通过 InsertScriptPlugin 插件将子项目的入口文件 main.js 以 script 标签形式插入到主项目的 html 中**
-
-注：务必将子项目的入口文件 main.js 对应的 script 标签放在主项目入口文件 app.js 的 script 标签之上，这是为了确保子项目的入口文件先于主项目的入口文件代码执行，接下来的步骤就会明白为什么这么做。
-
-再注：本地开发环境下项目的入口文件编译后的 main.js 是保存在内存中的，所以磁盘上看不见，但是可以访问。
-
-InsertScriptPlugin 核心代码如下：
-
-```js
-compiler.hooks.compilation.tap('InsertScriptWebpackPlugin', (compilation) => {
-  compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing.tap(
-    'InsertScriptWebpackPlugin',
-    (htmlPluginData) => {
-      const {
-        assets: { js }
-      } = htmlPluginData;
-      // 将传入的 js 以 script 标签形式插入到 html 中
-      // 注意：需要将子项目的入口文件 main.js 放在主项目入口文件 app.js 之前，因为需要子项目提前将自己的 route list 注册到全局上
-      js.unshift(...self.files);
-    }
-  );
-});
-```
-
-3、主项目的 html 要访问子项目里的编译后的 js / css 等资源，需要进行**代理转发**
-
-- 如果是本地开发时，可以通过 webpack 提供的 proxy，例如：
-
-```js
-const PROXY = {
-  '/app-a/': {
-    target: 'http://localhost:10241/'
-  }
-};
-```
-
-- 如果是线上部署时，可以通过 nginx 转发或者将打包后的主项目和子项目放在一个文件夹中
-
-4、当浏览器解析 html 时，解析并执行子项目的 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中
-
-子项目 main.js 代码如下（为了尽量减少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由注册）
-
-```js
-import Vue from 'vue';
-import routes from './routes';
-
-const share = (Vue.__share__ = Vue.__share__ || {});
-const routesPool = (share.routes = share.routes || {});
-
-// 将子项目的 route list 挂载到 Vue.__share__.routes 上，以便后续主项目将其合并到总的路由中
-routesPool[process.env.VUE_APP_NAME] = routes;
-```
-
-5、继续向下解析，解析并执行主项目 main.js 时，**从 Vue.\_\_share\_\_.routes 获取所有子项目的 route list，合并到总的路由表中**，然后初始化一个 vue-router 实例，并传入到 new Vue 内
-
-相关关键代码如下
-
-```js
-// 从 Vue.__share__.routes 获取所有子项目的 route list，合并到总的路由表中
-const routes = Vue.__share__.routes;
-
-export default new Router({
-  routes: Object.values(routes).reduce((acc, prev) => acc.concat(prev), [
-    {
-      path: '/',
-      redirect: '/app-a'
-    }
-  ])
-});
-```
-
-到此就实现了单页面应用按照业务拆分成多个子项目，减少了前端项目的构建时间，同时也解决了代码的冗余问题。
-
-另外如果需要使用 vuex，则和 vue-router 的顺序恰好相反（先主项目后子项目）：
-
-1、首先在主项目的入口文件中初始化一个 store 实例 new Vuex.Store，然后挂在到 Vue.\_\_share\_\_.store 上
-
-2、然后在子项目的 APP.vue 中获取到 Vue.\_\_share\_\_.store 并调用 store.registerModule(‘app-x', store)，将子项目的 store 作为子模块注册到 store 上
-
-**缺陷**：
-
-这个方案最大的问题在于主项目和子项目需要共用一个 Vue 实例，所以无法做到某个子项目要使用最新版 Vue（例如 Vue3）或者切换到其他前端框架。
-
-但它的优势在于方案逻辑清晰，对已有项目的侵入性较小。
 
 ## JSBridge
 
@@ -655,7 +697,9 @@ function p(platforms = ['android', 'ios']) {
 
 - 网页崩溃
 
-其中静态资源加载失败，可以通过 window.addEventListener('error', ..., true) 在事件捕获阶段获取，然后筛选出资源加载失败的错误并手动上报错误。核心代码如下：
+### 静态资源加载异常
+
+静态资源加载失败，可以通过 window.addEventListener('error', ..., true) 在事件捕获阶段获取，然后筛选出资源加载失败的错误并手动上报错误。核心代码如下：
 
 ```ts
 // 全局监控资源加载错误
@@ -685,7 +729,9 @@ window.addEventListener(
 );
 ```
 
-关于服务端接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数（native 接口的错误上报类似，可在项目中查看）。核心代码如下：
+### 接口异常
+
+接口异常，可以通过在封装的 http 模块中，全局集成上报错误函数（native 接口的错误上报类似，可在项目中查看）。核心代码如下：
 
 ```ts
 function errorReport(
@@ -711,6 +757,8 @@ function errorReport(
 }
 ```
 
+### js 报错
+
 关于全局 js 报错，sentry 针对的前端的 sdk 已经通过 window.onerror 和 window.addEventListener('unhandledrejection', ..., false) 进行全局监听并上报。
 
 需要注意的是其中 window.onerror = (message, source, lineno, colno, error) =>{} 不同于 window.addEventListener('error', ...)，window.onerror 捕获的信息更丰富，包括了错误字符串信息、发生错误的 js 文件，错误所在的行数、列数、和 Error 对象（其中还会有调用堆栈信息等）。所以 sentry 会选择 window.onerror 进行 js 全局监控。
@@ -731,6 +779,8 @@ Vue.config.errorHandler = (error, vm, info) => {
 };
 ```
 
+#### try catch 中自动添加上报错误方法
+
 但是对于我们业务中，经常会对一些可能报错的代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
 
 ```js
@@ -749,9 +799,11 @@ if (!IS_DEV) {
 }
 ```
 
+#### 捕获不同域 JS 报错
+
 针对跨域 js 问题，当加载的不同域的 js 文件时，例如通过 cdn 加载打包后的 js。如果 js 报错，window.onerror 只能捕获到 script error，没有任何有效信息能帮助我们定位问题。此时就需要我们做一些事情：
-第一步、服务端需要在返回 js 的返回头设置 Access-Control-Allow-Origin: \*
-第二部、设置 script 标签属性 crossorigin，代码如下：
+首先服务端需要在返回 js 的返回头设置 Access-Control-Allow-Origin: \*
+然后设置 script 标签属性 crossorigin，代码如下：
 
 ```html
 <script src="http://helloworld/main.js" crossorigin></script>
@@ -766,9 +818,13 @@ script.src = url;
 document.body.appendChild(script);
 ```
 
+### 网页崩溃
+
 针对网页崩溃问题，推荐一个基于 service work 的监控方案，相关文章已列在下面的。如果是 webview 加载网页，也可以通过 webview 加载失败的钩子监控网页崩溃等。
 
 [如何监控网页崩溃？](https://juejin.im/entry/5be158116fb9a049c6434f4a)
+
+### 上传 sourcemap 到 Sentry
 
 最后，因为部署到线上的代码一般都是经过压缩混淆的，如果没有上传 sourcemap 的话，是无法定位到具体源码的，可以现在 项目中添加 .sentryclirc 文件，其中内容可参考本项目的 .sentryclirc，然后通过 sentry-cli (需要全局全装 sentry-cli 即`npm install sentry-cli`)命令行工具进行上传，命令如下：
 
@@ -844,9 +900,7 @@ scrollBehavior (to, from, savedPosition) {
 
 在我们的应用中，会存在一些很少改动的数据，而这些数据有需要从后端获取，比如公司人员、公司职位分类等，此类数据在很长一段时间时不会改变的，而每次打开页面或切换页面时，就重新向后端请求。为了能够减少不必要请求，加快页面渲染速度，可以引用 mem 缓存库。
 
-mem 基本原理是通过以接收的函数为 key 创建一个 WeakMap，然后再以函数参数为 key 创建一个 Map，value 就是函数的执行结果，同时将这个 Map 作为刚刚的 WeakMap 的 value 形成嵌套关系，从而实现对同一个函数不同参数进行缓存。而且支持传入 maxAge，即数据的有效期，当某个数据到达有效期后，会自动销毁，避免内存泄漏。
-
-选择 WeakMap 是因为其相对 Map 保持对键名所引用的对象是弱引用，即垃圾回收机制不将该引用考虑在内。只要所引用的对象的其他引用都被清除，垃圾回收机制就会释放该对象所占用的内存。也就是说，一旦不再需要，WeakMap 里面的键名对象和所对应的键值对会自动消失，不用手动删除引用。
+mem 基本原理是利用闭包将函数执行结果保存在内存中，当下一次调用这个函数时，首先从内存中的缓存对象中查找是否已经存在，如果没有再执行函数。同时支持传入 maxAge，即数据的有效期，当某个数据到达有效期后，会自动销毁，避免内存泄漏。
 
 mem 作为高阶函数，可以直接接受封装好的接口请求。但是为了更加直观简便，我们可以按照类的形式集成我们的接口函数，然后就可以用装饰器的方式使用 mem 了（装饰器只能修饰类和类的类的方法，因为普通函数会存在变量提升）。下面是相关代码：
 
@@ -916,7 +970,7 @@ export class CommonService {
 
 下面是 vw 和 rem 的优缺点对比图：
 
-<img src="./assets/vw-rem.png" width="1200"/>
+<img src="https://i.loli.net/2020/02/29/uDBz1Ndc5iFvQtH.png" width="1200"/>
 
 关于 vw 兼容性问题，目前在移动端 iOS 8 以上以及 Android 4.4 以上获得支持。如果有兼容更低版本需求的话，可以选择 viewport 的 pollify 方案，其中比较主流的是 [Viewport Units Buggyfill](https://github.com/rodneyrehm/viewport-units-buggyfill)。
 
