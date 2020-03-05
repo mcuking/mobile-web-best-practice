@@ -7,13 +7,19 @@ import Note from '../entities/note';
 import { INotebook, INote } from '@/types';
 
 class NotebookInteractor {
-  constructor(private notebookService: INotebookService) {}
+  public static getInstance() {
+    return this._instance;
+  }
+
+  private static _instance = new NotebookInteractor(new NotebookService());
+
+  constructor(private _service: INotebookService) {}
 
   public async saveNotebook(payload: INotebook, id: number | undefined) {
     try {
       id
-        ? await this.notebookService.edit({ id, ...payload })
-        : await this.notebookService.create(payload);
+        ? await this._service.edit({ id, ...payload })
+        : await this._service.create(payload);
     } catch (error) {
       throw error;
     }
@@ -21,7 +27,7 @@ class NotebookInteractor {
 
   public async getNotebook(id: number) {
     try {
-      const notebook = await this.notebookService.get(id);
+      const notebook = await this._service.get(id);
       if (notebook) {
         notebook.notes = notebook.notes.map((note) => new Note(note));
         return notebook;
@@ -33,7 +39,7 @@ class NotebookInteractor {
 
   public async deleteNotebook(id: number) {
     try {
-      await this.notebookService.delete(id);
+      await this._service.delete(id);
     } catch (error) {
       throw error;
     }
@@ -41,9 +47,7 @@ class NotebookInteractor {
 
   public async getNotebookList(query: ListQuery) {
     try {
-      const { data: notebookList, total } = await this.notebookService.getList(
-        query
-      );
+      const { data: notebookList, total } = await this._service.getList(query);
 
       return {
         data: notebookList.map((notebook) => {
@@ -70,6 +74,4 @@ class NotebookInteractor {
   }
 }
 
-const notebookInteractor = new NotebookInteractor(new NotebookService());
-
-export default notebookInteractor;
+export default NotebookInteractor.getInstance();
