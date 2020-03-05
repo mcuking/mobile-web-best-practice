@@ -43,7 +43,7 @@
 
 目前前端开发主要是以单页应用为主，当应用的业务逻辑足够复杂的时候，总会遇到类似下面的问题：
 
-- 业务逻辑过于集中在视图层，导致多平台无法共用本应该与平台无关的业务逻辑，例如一个产品需要维护 mobile 和 PC 两端，或者同一个产品有 web 和 react native 两端；
+- 业务逻辑过于集中在视图层，导致多平台无法共用本应该与平台无关的业务逻辑，例如一个产品需要维护 Mobile 和 PC 两端，或者同一个产品有 Web 和 React Native 两端；
 
 - 产品需要多人协作时，每个人的代码风格和对业务的理解不同，导致业务逻辑分布杂乱无章；
 
@@ -61,9 +61,9 @@
 
 Services 层是用来对底层技术进行操作的，例如封装 AJAX 请求,操作浏览器 cookie、locaStorage、indexDB，操作 native 提供的能力（如调用摄像头等），以及建立 Websocket 与后端进行交互等。
 
-其中又可细分出来一个 translator 层，主要是对后端提供的接口进行数据的转换修正，例如接口返回的数据命名不规范或格式有问题等等，一般以纯函数形式存在。下面以本项目实际代码为例进行讲解。
+其中 Services 层又可细分出 request 层和 translator 层， request 层主要是实现 Services 的大部分功能。而 translator 层主要用于清洗从服务端或客户端接口返回的数据：删除部分数据、修改属性名、转化部分数据等，一般可定义成纯函数形式。下面以本项目实际代码为例进行讲解。
 
-向后端获取 quote 数据:
+从后端获取 quote 数据:
 
 ```ts
 export class CommonService implements ICommonService {
@@ -82,7 +82,7 @@ export class CommonService implements ICommonService {
 }
 ```
 
-向客户端日历中同步任务数据:
+向客户端日历中同步 Note 数据:
 
 ```ts
 export class NativeService implements INativeService {
@@ -107,24 +107,31 @@ export class NativeService implements INativeService {
 }
 ```
 
-向 indexDB 存储任务数据：
+从 indexDB 读取某个 Note 详情数据：
 
 ```ts
+import { noteTranslator } from './translators';
+
 export class NoteService implements INoteService {
-  public async create(payload: INote, notebookId: number): Promise<void> {
+  public async get(id: number): Promise<INotebook | undefined> {
     const db = await createDB();
 
-    const notebook = await db.getFromIndex('notebooks', 'id', notebookId);
-    if (notebook) {
-      notebook.notes.push(payload);
-      await db.put('notebooks', notebook);
-    }
+    const notebook = await db.getFromIndex('notebooks', 'id', id);
+    return noteTranslator(notebook!);
   }
-  ...
 }
 ```
 
-这里我们可以拓宽下思路，当后端 API 仍在开发的时候，我们可以使用 indexDB 等本地存储技术进行模拟，建立一个 note-indexDB 服务，先提供给上层 Interactors 层进行调用，当后端 API 开发好后，就可以创建一个 note-server 服务，来替换之前的服务。只要保证前后两个服务对外暴露的接口一致，另外与上层的 Interactors 层没有过度耦合，即可实现快速切换。
+其中，noteTranslator 就属于 translator 层，用于订正接口返回的 note 数据，定义如下：
+
+```ts
+export function noteTranslator(item: INotebook) {
+  // item.themeColor = item.color;
+  return item;
+}
+```
+
+另外我们可以拓宽下思路，当后端 API 仍在开发的时候，我们可以使用 indexDB 等本地存储技术进行模拟，建立一个 note-indexDB 服务，先提供给上层 Interactors 层进行调用，当后端 API 开发好后，就可以创建一个 note-server 服务，来替换之前的服务。只要保证前后两个服务对外暴露的接口一致，另外与上层的 Interactors 层没有过度耦合，即可实现快速切换。
 
 ### Entities 层
 
@@ -158,9 +165,9 @@ export default class Note {
 }
 ```
 
-通过上面的代码可以看到，这里主要是以实体本身的属性以及派生属性为主，当然实体本身也可以具有方法，只是本项目中还没有涉及。至于 DDD 中的聚合等概念，也由于项目业务没有涉及，在这里就不作说明了，有兴趣的可以参考下面列出来的笔者翻译的文章：[可扩展的前端#2--常见模式（译）](https://juejin.im/post/5d8ac00cf265da5b6a16844a)。
+通过上面的代码可以看到，这里主要是以实体本身的属性以及派生属性为主，当然实体本身也可以具有方法，用于实现属于实体自身的业务逻辑（笔者认为业务逻辑可以分为两部分，一部分业务逻辑属于跟实体强相关的，应该通过在实体类中的方法实现。另一部分业务逻辑则更多的是实体之间的业务，则可以放在 Interactors 层中实现）。只是本项目中还没有涉及，在这里就不作更多说明了，有兴趣的可以参考下面列出来的笔者翻译的文章：[可扩展的前端#2--常见模式（译）](https://juejin.im/post/5d8ac00cf265da5b6a16844a)。
 
-另外笔者认为并不是所有的实体都应该按上面那样封装成一个类，如果某个实体本身业务逻辑很简单，就没有必要进行封装，例如本项目中 Notebook 实体就没有做任何封装，而是直接在 Interactors 层调用 Services 层提供的 API。
+另外笔者认为并不是所有的实体都应该按上面那样封装成一个类，如果某个实体本身业务逻辑很简单，就没有必要进行封装，例如本项目中 Notebook 实体就没有做任何封装，而是直接在 Interactors 层调用 Services 层提供的 API。毕竟我们做这些分层最终的目的就是理顺业务逻辑，提升开发效率，所以没有必要过于死板。
 
 ### Interactors 层
 
@@ -172,31 +179,6 @@ class NoteInteractor {
     private noteService: INoteService,
     private nativeService: INativeService
   ) {}
-
-  public async saveNote(payload: INote, notebookId: number, isEdit: boolean) {
-    try {
-      if (isEdit) {
-        await this.noteService.edit(payload, notebookId);
-      } else {
-        await this.noteService.create(payload, notebookId);
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  public async getNote(notebookId: number, id: number) {
-    try {
-      const note = await this.noteService.get(notebookId, id);
-      if (note) {
-        return new Note(note);
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  ...
 
   public async changeSyncStatus(
     notebookId: number,
@@ -293,7 +275,9 @@ preload-routes 和 async-routes 是目前笔者所在团队使用的微前端方
 
 在讲解之前，首先明确下这套方案有两种实现方式，一种是预加载路由，另一种是懒加载路由，接下来就分别介绍这两种方式的实现机制。
 
-### 预加载路由
+### 实现机制
+
+#### 预加载路由
 
 [preload-routes](https://github.com/micro-frontends-vue/preload-routes)
 
@@ -327,7 +311,7 @@ compiler.hooks.compilation.tap('InsertScriptWebpackPlugin', (compilation) => {
 
 3.主项目的 html 要访问子项目里的编译后的 js / css 等资源，需要进行**代理转发**
 
-- 如果是本地开发时，可以通过 webpack 提供的 proxy，例如：
+如果是本地开发时，可以通过 webpack 提供的 proxy，例如：
 
 ```js
 const PROXY = {
@@ -337,9 +321,9 @@ const PROXY = {
 };
 ```
 
-- 如果是线上部署时，可以通过 nginx 转发或者将打包后的主项目和子项目放在一个文件夹中按照相对路径引用。
+如果是线上部署时，可以通过 nginx 转发或者将打包后的主项目和子项目放在一个文件夹中按照相对路径引用。
 
-  4.当浏览器解析 html 时，解析并执行到子项目的入口文件 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中。
+4.当浏览器解析 html 时，解析并执行到子项目的入口文件 main.js，**将子项目的 route list 注册到 Vue.\_\_share\_\_.routes 上**，以便后续主项目将其合并到总的路由中。
 
 子项目 main.js 代码如下：（为了尽量减少首次主项目页面渲染时加载的资源，子项目的入口文件建议只做路由挂载）
 
@@ -380,13 +364,13 @@ export default new Router({
 
 2.然后在子项目的 App.vue 中获取到 Vue.\_\_share\_\_.store 并调用 store.registerModule(‘app-x', store)，将子项目的 store 作为子模块注册到 store 上
 
-### 懒加载路由
+#### 懒加载路由
 
 [async-routes](https://github.com/micro-frontends-vue/async-routes)
 
 懒加载路由，顾名思义，就是说等到用户点击要进入子项目模块，通过解析即将跳转的路由确定是哪一个子项目，然后再异步去加载该子项目的入口文件 main.js（可以通过 [systemjs](https://github.com/systemjs/systemjs) 或者自己写一个动态创建 script 标签并插入 body 的方法）。加载成功后就可以将子项目的路由动态添加到主项目总的路由里了。
 
-1.主项目 router.js 文件中定义了在 vue-router 的 beforeEach 钩子去拦截路由，并根据即将跳转的路由分析出需要哪个子项目，然后去异步加载对应子项目入口文件，下面是核心代码：
+1.主项目 router.js 文件中定义了**在 vue-router 的 beforeEach 钩子去拦截路由，并根据即将跳转的路由分析出需要哪个子项目，然后去异步加载对应子项目入口文件**，下面是核心代码：
 
 ```js
 const cachedModules = new Set();
@@ -395,6 +379,7 @@ router.beforeEach(async (to, from, next) => {
   const [, module] = to.path.split('/');
 
   if (Reflect.has(modules, module)) {
+    // 如果已经加载过对应子项目，则无需重复加载，直接跳转即可
     if (!cachedModules.has(module)) {
       const { default: application } = await window.System.import(
         modules[module]

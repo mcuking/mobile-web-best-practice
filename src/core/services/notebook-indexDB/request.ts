@@ -1,4 +1,5 @@
 import createDB from '@/utils/create-indexDB';
+import { noteTranslator } from './translators';
 
 import { INotebook } from '@/types';
 
@@ -28,7 +29,7 @@ export class NotebookService implements INotebookService {
     const db = await createDB();
 
     const notebook = await db.getFromIndex('notebooks', 'id', id);
-    return notebook;
+    return noteTranslator(notebook!);
   }
 
   public async delete(id: number): Promise<void> {
@@ -61,7 +62,7 @@ export class NotebookService implements INotebookService {
     }
 
     return {
-      data: list.slice(start, end + 1),
+      data: list.slice(start, end + 1).map((node) => noteTranslator(node)),
       total: length
     };
   }
