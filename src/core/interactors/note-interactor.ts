@@ -5,17 +5,26 @@ import Note from '../entities/note';
 import { INote, SyncCalendarParams } from '@/types';
 
 class NoteInteractor {
+  public static getInstance() {
+    return this._instance;
+  }
+
+  private static _instance = new NoteInteractor(
+    new NoteService(),
+    new NativeService()
+  );
+
   constructor(
-    private noteService: INoteService,
-    private nativeService: INativeService
+    private _service: INoteService,
+    private _service2: INativeService
   ) {}
 
   public async saveNote(payload: INote, notebookId: number, isEdit: boolean) {
     try {
       if (isEdit) {
-        await this.noteService.edit(payload, notebookId);
+        await this._service.edit(payload, notebookId);
       } else {
-        await this.noteService.create(payload, notebookId);
+        await this._service.create(payload, notebookId);
       }
     } catch (error) {
       throw error;
@@ -24,7 +33,7 @@ class NoteInteractor {
 
   public async getNote(notebookId: number, id: number) {
     try {
-      const note = await this.noteService.get(notebookId, id);
+      const note = await this._service.get(notebookId, id);
       if (note) {
         return new Note(note);
       }
@@ -35,7 +44,7 @@ class NoteInteractor {
 
   public async deleteNote(notebookId: number, id: number) {
     try {
-      await this.noteService.delete(notebookId, id);
+      await this._service.delete(notebookId, id);
     } catch (error) {
       throw error;
     }
@@ -72,7 +81,7 @@ class NoteInteractor {
   public async syncCalendar(params: SyncCalendarParams, notebookId: number) {
     const noteId = params.id;
     try {
-      await this.nativeService.syncCalendar(params, async () => {
+      await this._service2.syncCalendar(params, async () => {
         await this.changeSyncStatus(notebookId, noteId, true);
       });
     } catch (error) {
@@ -81,9 +90,4 @@ class NoteInteractor {
   }
 }
 
-const noteInteractor = new NoteInteractor(
-  new NoteService(),
-  new NativeService()
-);
-
-export default noteInteractor;
+export default NoteInteractor.getInstance();

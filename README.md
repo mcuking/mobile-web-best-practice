@@ -171,45 +171,75 @@ export default class Note {
 
 ### Interactors 层
 
-Interactors 层是负责处理业务逻辑的层，主要是由业务用例组成。下面是本项目中 Note 的 Interactors 层提供的对 Note 的增删改查以及同步到日历等业务：
+Interactors 层是负责处理业务逻辑的层，主要是由业务用例组成。一般情况下 Interactor 是一个单例，它使我们能够存储一些状态并避免不必要的 HTTP 调用，提供一种重置应用程序状态属性的方法（例如：在失去修改记录时恢复数据），决定什么时候应该加载新的数据。
+
+下面是本项目中 Common 的 Interactors 层提供的公共调用的业务：
 
 ```ts
-class NoteInteractor {
-  constructor(
-    private noteService: INoteService,
-    private nativeService: INativeService
-  ) {}
+class CommonInteractor {
+  public static getInstance() {
+    return this._instance;
+  }
 
-  public async changeSyncStatus(
-    notebookId: number,
-    id: number,
-    status: boolean
-  ) {
+  private static _instance = new CommonInteractor(new CommonService());
+
+  private _quotes: any;
+
+  constructor(private _service: ICommonService) {}
+
+  public async getQuoteList() {
+    // 单例模式下，将一些基本固定不变的接口数据保存在内存中，避免重复调用
+    // 但要注意避免内存泄露
+    if (this._quotes !== undefined) {
+      return this._quotes;
+    }
+
+    let response;
+
     try {
-      const note = await this.getNote(notebookId, id);
-      if (note) {
-        note.isSync = status;
-        await this.saveNote(note, notebookId, true);
-      }
+      response = await this._service.getQuoteList();
     } catch (error) {
       throw error;
     }
+
+    this._quotes = response;
+    return this._quotes;
+  }
+}
+```
+
+通过上面的代码可以看到，Sevices 层提供的类的实例主要是通过 Interactors 层的类的构造函数获取到，这样就可以达到两层之间解耦，实现快速切换 service 的目的了，当然这个和依赖注入 DI 还是有些差距的，不过已经满足了我们的需求。
+
+另外 Interactors 层还可以获取 Entities 层提供的实体类，将实体类提供的与实体强相关的业务逻辑和 Interactors 层的业务逻辑融合到一起提供给 View 层，例如 Note 的 Interactors 层部分代码如下：
+
+```ts
+class NoteInteractor {
+  public static getInstance() {
+    return this._instance;
   }
 
-  public async syncCalendar(params: SyncCalendarParams, notebookId: number) {
-    const noteId = params.id;
+  private static _instance = new NoteInteractor(
+    new NoteService(),
+    new NativeService()
+  );
+
+  constructor(
+    private _service: INoteService,
+    private _service2: INativeService
+  ) {}
+
+  public async getNote(notebookId: number, id: number) {
     try {
-      await this.nativeService.syncCalendar(params, async () => {
-        await this.changeSyncStatus(notebookId, noteId, true);
-      });
+      const note = await this._service.get(notebookId, id);
+      if (note) {
+        return new Note(note);
+      }
     } catch (error) {
       throw error;
     }
   }
 }
 ```
-
-通过上面的代码可以看到，Sevices 层提供的类的实例主要是通过 Interactors 层的类的构造函数获取到，这样就可以达到两层之间解耦，实现快速切换 service 的目的了，当然这个和依赖注入 DI 还是有些差距的，不过已经满足了我们的需求。另外，Interactors 层还可以获取 Entities 层提供的类，构造成实例提供给 View 层。
 
 当然这种分层架构并不是银弹，其主要适用的场景是：实体关系复杂，而交互相对模式化，例如企业软件领域。相反实体关系简单而交互复杂多变就不适合这种分层架构了。
 

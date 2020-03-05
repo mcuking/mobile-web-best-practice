@@ -13,6 +13,7 @@
     "trailing-comma": false,
     "object-literal-key-quotes": false,
     "quotemark": [true, "single", "jsx-double"],
-    "no-console": false
+    "no-console": false,
+    "variable-name": false
   }
 }
