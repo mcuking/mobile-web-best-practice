@@ -21,7 +21,7 @@ export const initPlatform = () => {
     window.$systemVersion = infoArray[2];
     window.$platform = infoArray[3] as Platform;
   } else {
-    window.$appVersion = undefined;
+    window.$appVersion = '1.0.0';
     window.$systemVersion = undefined;
     window.$platform = 'browser';
   }
