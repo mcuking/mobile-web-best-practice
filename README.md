@@ -24,6 +24,7 @@
 - [异常监控](#异常监控)
 - [页面状态保持](#页面状态保持)
 - [请求数据缓存](#请求数据缓存)
+- [限制原生接口调用](#限制原生接口调用)
 - [样式适配](#样式适配)
 - [表单校验](#表单校验)
 - [手势库](#手势库)
@@ -87,7 +88,7 @@ export class CommonService implements ICommonService {
 ```ts
 export class NativeService implements INativeService {
   // 同步到日历
-  @p()
+  @limit(['android', 'ios'], '1.0.1')
   public syncCalendar(params: SyncCalendarParams, onSuccess: () => void): void {
     const cb = async (errCode: number) => {
       const msg = NATIVE_ERROR_CODE_MAP[errCode];
@@ -702,17 +703,20 @@ h5 端同步日历核心代码（通过装饰器来限制调用接口的平台�
 ```ts
 class NativeMethods {
   // 同步到日历
-  @p()
-  public syncCalendar(params: SyncCalendarParams) {
-    const cb = (errCode: number) => {
+  @limit(['android', 'ios'], '1.0.1')
+  public syncCalendar(params: SyncCalendarParams, onSuccess: () => void): void {
+    const cb = async (errCode: number) => {
       const msg = NATIVE_ERROR_CODE_MAP[errCode];
 
       Vue.prototype.$toast(msg);
 
       if (errCode !== 6000) {
         this.errorReport(msg, 'syncCalendar', params);
+      } else {
+        await onSuccess();
       }
     };
+
     dsbridge.call('syncCalendar', params, cb);
   }
 
@@ -1030,6 +1034,82 @@ export class CommonService {
     });
 
     return list;
+  }
+}
+```
+
+## 限制原生接口调用
+
+在平时开发中可能经常遇到类似情况：如果一个新功能需要 H5 调用 Native 提供的接口，部署上线后 H5 已经更新，但用户并没有更新客户端，就会导致调用接口无效的问题。那么如何解决这个问题呢？
+
+### 获取客户端相关信息
+
+首先我们需要思考的是如何获取客户端的平台和版本号等信息，笔者推荐一种方式：Native 端修改 User Agent，向其中添加客户端的相关信息，而 H5 通过正则匹配到相关信息并挂在到全局上。下面是 H5 端的相关代码：
+
+```js
+// 从 UA 获取设备相关信息并在全局初始化
+export const initPlatform = () => {
+  const UA = navigator.userAgent;
+  const info = UA.match(/\s{1}DSBRIDGE[\w\.]+$/g);
+  if (info && info.length > 0) {
+    const infoArray = info[0].split('_');
+    window.$appVersion = infoArray[1];
+    window.$systemVersion = infoArray[2];
+    window.$platform = infoArray[3] as Platform;
+  } else {
+    window.$appVersion = '1.0.0';
+    window.$systemVersion = undefined;
+    window.$platform = 'browser';
+  }
+};
+```
+
+### 优雅的限制接口调用
+
+然后就要思考在当前环境不满足接口调用的条件时（例如客户端版本过低、只支持 iOS 端等），如何限制接口的调用？比较直接的办法就是在调用接口的业务代码做判断，或者直接在封装的接口方法里进行判断，无论哪种都会显得冗余。这里笔者推荐使用装饰器方式对接口的方法进行装饰，如果不满足条件，则重写被装饰的方法，里面可以加些提示用户的逻辑。（前提是类的实例方法，因为装饰器只能修饰类和类的方法）。
+
+下面就是装饰器方法的定义和使用方式:
+
+```js
+/**
+ * 限制接口调用的平台和客户端版本
+ * 实际情况中多个平台客户端版本不一致，可以根据项目需求对下面的函数做修改
+ * @param {string} [platforms=['android', 'ios']]
+ * @param {string} [version='1.0.0']
+ * @returns
+ */
+function limit(platforms = ['android', 'ios'], version = '1.0.0') {
+  return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
+    if (!platforms.includes(window.$platform)) {
+      descriptor.value = () => {
+        return Vue.prototype.$toast(
+          `当前处在 ${window.$platform} 环境，无法调用接口哦`
+        );
+      };
+
+      return descriptor;
+    }
+
+    if (
+      window.$appVersion &&
+      compareVersions.compare(version, window.$appVersion, '>')
+    ) {
+      descriptor.value = () => {
+        return Vue.prototype.$toast(
+          `当前客户端版本过低，请升级到 ${version} 以上版本`
+        );
+      };
+
+      return descriptor;
+    }
+  };
+}
+
+export class NativeService implements INativeService {
+  // 同步到日历
+  @limit(['android', 'ios'], '1.0.1')
+  public syncCalendar(params: SyncCalendarParams, onSuccess: () => void): void {
+    ...
   }
 }
 ```

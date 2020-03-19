@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import dsbridge from 'dsbridge';
+import compareVersions from 'compare-versions';
 import NATIVE_ERROR_CODE_MAP from '@/constants/native-error-code';
 
 import { NativeApiErrorInfo, SyncCalendarParams } from '@/types';
@@ -10,7 +11,7 @@ export interface INativeService {
 
 export class NativeService implements INativeService {
   // 同步到日历
-  @p()
+  @limit(['android', 'ios'], '1.0.1')
   public syncCalendar(params: SyncCalendarParams, onSuccess: () => void): void {
     const cb = async (errCode: number) => {
       const msg = NATIVE_ERROR_CODE_MAP[errCode];
@@ -42,10 +43,13 @@ export class NativeService implements INativeService {
 }
 
 /**
- * @param {platforms} - 接口限制的平台
- * @return {Function} - 装饰器
+ * 限制接口调用的平台和客户端版本
+ * 实际情况中多个平台客户端版本不一致，可以根据项目需求对下面的函数做修改
+ * @param {string} [platforms=['android', 'ios']]
+ * @param {string} [version='1.0.0']
+ * @returns
  */
-function p(platforms = ['android', 'ios']) {
+function limit(platforms = ['android', 'ios'], version = '1.0.0') {
   return (target: AnyObject, name: string, descriptor: PropertyDescriptor) => {
     if (!platforms.includes(window.$platform)) {
       descriptor.value = () => {
@@ -53,8 +57,21 @@ function p(platforms = ['android', 'ios']) {
           `当前处在 ${window.$platform} 环境，无法调用接口哦`
         );
       };
+
+      return descriptor;
     }
 
-    return descriptor;
+    if (
+      window.$appVersion &&
+      compareVersions.compare(version, window.$appVersion, '>')
+    ) {
+      descriptor.value = () => {
+        return Vue.prototype.$toast(
+          `当前客户端版本过低，请升级到 ${version} 以上版本`
+        );
+      };
+
+      return descriptor;
+    }
   };
 }
