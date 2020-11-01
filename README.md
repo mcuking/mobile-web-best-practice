@@ -783,10 +783,6 @@ function p(platforms = ['android', 'ios']) {
 
 [sentry-webpack-plugin](https://github.com/getsentry/sentry-webpack-plugin)
 
-**编译时自动在 try catch 中添加错误上报函数的 babel 插件**
-
-[babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)
-
 **补充：**
 
 前端的异常主要有以下几个部分：
@@ -881,26 +877,6 @@ Vue.config.errorHandler = (error, vm, info) => {
 };
 ```
 
-#### try catch 中自动添加上报错误方法
-
-但是对于我们业务中，经常会对一些可能报错的代码使用 try catch，这些错误如果没有在 catch 中向上抛出，是无法通过 window.onerror 捕获的，针对这种情况，笔者开发了一个 babel 插件 [babel-plugin-try-catch-error-report](https://github.com/mcuking/babel-plugin-try-catch-error-report)，该插件可以在 [babel](https://babeljs.io/) 编译 js 的过程中，通过在 ast 中查找 catch 节点，然后再 catch 代码块中自动插入错误上报函数，可以自定义函数名，和上报的内容（源码所在文件，行数，列数，调用栈，以及当前 window 属性，比如当前路由信息 window.location.href）。相关配置代码如下：
-
-```js
-if (!IS_DEV) {
-  plugins.push([
-    'try-catch-error-report',
-    {
-      expression: 'window.$sentry.log',
-      needFilename: true,
-      needLineNo: true,
-      needColumnNo: false,
-      needContext: true,
-      exclude: ['node_modules']
-    }
-  ]);
-}
-```
-
 #### 捕获不同域 JS 报错
 
 针对跨域 js 问题，当加载的不同域的 js 文件时，例如通过 cdn 加载打包后的 js。如果 js 报错，window.onerror 只能捕获到 script error，没有任何有效信息能帮助我们定位问题。此时就需要我们做一些事情：
@@ -974,11 +950,9 @@ scrollBehavior (to, from, savedPosition) {
 
 但是该方式的缺陷有两点：
 
-1. 需要限定 vue-router 为 history 模式
+1. 只在支持 `history.pushState` 的浏览器中可用
 
 2. 只能记住整体页面的位置（例如当列表仅仅是页面的一部分，则无法保持位置）
-
-另外如果还需要保持的表单数据等组件 data 中的值，也可以通过 mixin + sessionStorage/localStorage 来实现自动保存和恢复，具体做法可参考笔者之前写的文章 [react-hooks + vue mixin 实现 h5 表单数据自动存储](https://github.com/mcuking/blog/issues/42)
 
 ### router-view
 
