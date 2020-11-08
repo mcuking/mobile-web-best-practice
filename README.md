@@ -12,7 +12,7 @@
 
 | 体验平台 | 二维码                                                                    | 链接                                            | 备注             |
 | -------- | ------------------------------------------------------------------------- | ----------------------------------------------- | ---------------- |
-| Web      | <img src="https://i.loli.net/2020/02/29/ViNRUteSbY1IZPa.png"  width=140/> | [点击体验](https://www.mcuking.club)            |                  |
+| Web      | <img src="https://i.loli.net/2020/11/08/IbAfiwedsGRl3hF.png"  width=140/> | [点击体验](http://122.51.132.117)            |                  |
 | Android  | <img src="https://i.loli.net/2020/02/29/wEqfsCRKnI2XP7V.png" width=140/>  | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
