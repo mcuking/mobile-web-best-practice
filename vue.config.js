@@ -47,7 +47,7 @@ module.exports = {
             packageNameKey: 'packageId',
             packageNameValue: 'main',
             version: 1,
-            baseUrl: 'https://www.mcuking.club/',
+            baseUrl: 'http://122.51.132.117/',
             fileTypes: ['js', 'css', 'png']
           })
         );
