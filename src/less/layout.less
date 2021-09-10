@@ -46,6 +46,8 @@
   bottom: 0;
   background: #fff;
   padding: 10px 16px;
+  padding-bottom: calc(constant(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
 }
 
 /* 空列表提示语样式 */
