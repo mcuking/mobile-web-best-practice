@@ -188,5 +188,7 @@ export default class Home extends Vue {
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 </style>
