@@ -5,7 +5,7 @@ import { UserInfo, ReportOptions } from '@/types';
 
 class Report {
   // 单例模式
-  public static getInstance(Vue: AnyObject, options: ReportOptions) {
+  public static getInstance(Vue: any, options: ReportOptions) {
     if (!this.instance) {
       this.instance = new Report(Vue, options);
       this.instance.install();
@@ -16,10 +16,10 @@ class Report {
 
   private static instance: Report;
 
-  public Vue: AnyObject;
+  public Vue: any;
   public options: ReportOptions;
 
-  constructor(Vue: AnyObject, options: ReportOptions) {
+  constructor(Vue: any, options: ReportOptions) {
     this.Vue = Vue;
     this.options = options;
   }
