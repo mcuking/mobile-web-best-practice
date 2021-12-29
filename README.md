@@ -1485,7 +1485,6 @@ http {
   #tcp_nopush   on;
   #keepalive_timeout 0;
   keepalive_timeout 65;
-  #用于对前端资源进行 gzip 压缩
   #gzip on;
   gzip on;
   gzip_min_length 5k;
@@ -1494,20 +1493,21 @@ http {
   gzip_comp_level 3;
   gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
   gzip_vary on;
+
   server {
     listen 80;
     server_name localhost;
     #前端项目
     location / {
-      index index.html index.htm;  #添加属性。
-      root /usr/share/nginx/html;  #站点目录
-      # 所有静态资源均指向 /index.html
-      try_files $uri $uri/ /index.html;
+        index index.html index.htm;  #添加属性。 
+        root /usr/share/nginx/html/dist;  #站点目录
+        # 所有静态资源均指向 /index.html
+        try_files $uri $uri/ /index.html;
     }
 
     error_page  500 502 503 504 /50x.html;
     location = /50x.html {
-      root  /usr/share/nginx/html;
+      root  /usr/share/nginx/html/dist;
     }
   }
 }
@@ -1518,21 +1518,23 @@ docker-compose.yml
 ```yml
 version: '3'
 services:
-  mobile-web-best-practice: #项目的service name
+  mobile-web-best-practice: #项目的 service name
     container_name: 'mobile-web-best-practice-container' #容器名称
     image: nginx #指定镜像
     restart: always
     ports:
-      - 80:80
+      - 8001:80
     volumes:
-      #~ ./nginx.conf为宿主机目录, /etc/nginx为容器目录
-      - ./nginx.conf:/etc/nginx/nginx.conf #挂载nginx配置
-      #~ ./dist 为宿主机 build 后的dist目录, /usr/src/app为容器目录,
-      - ./dist:/usr/share/nginx/html/ #挂载项目
+      #~ 将宿主机上的本项目的 nginx.conf 文件映射到容器内的 /etc/nginx 文件
+      - ./nginx.conf:/etc/nginx/nginx.conf #挂载 nginx 配置
+      #~ 将宿主机上的本项目映射到容器的 /usr/share/nginx/html
+      - ./:/usr/share/nginx/html/ #挂载项目
     privileged: true
 ```
 
 这里需要解释下 volumes 参数，在打包 Docker 镜像时，如果将 nginx.conf 和 dist 直接拷贝到镜像中，那么每次修改相关文件时，都需要重新打包新的镜像。通过 volumes 可以将宿主机的某个文件映射到容器的某个文件，那么改动相关文件，就不要重新打包镜像了，只需修改宿主机上的文件即可。
+
+> PS：如果直接将 dist 目录映射到容器中，则每次构建后删除并重新生成 dist 目录时，会产生文件访问权限问题。为了解决该问题，将目录向上提升一级，即整体项目映射到容器中（整体项目不会存在删除并重新生成的问题）。同时需要修改 `nginx.conf` 的配置，将 root 设置为 `/usr/share/nginx/html` 下的 dist 目录。
 
 然后在 Jenkins 创建一个新的任务，选择【构建一个自由风格的软件项目】，并设置相关配置，如下图所示。
 
