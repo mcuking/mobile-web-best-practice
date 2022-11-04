@@ -1,0 +1,104 @@
+{
+  "packageId": "main",
+  "version": 1,
+  "items": [
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/app.85cfe874.js",
+      "path": "js/app.85cfe874.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-146ee159.46b29746.js",
+      "path": "js/chunk-146ee159.46b29746.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-236466c0.a237f146.js",
+      "path": "js/chunk-236466c0.a237f146.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-5c7fa610.3b8c5cfc.js",
+      "path": "js/chunk-5c7fa610.3b8c5cfc.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-680897da.aebd3979.js",
+      "path": "js/chunk-680897da.aebd3979.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-c1ec1370.4db00113.js",
+      "path": "js/chunk-c1ec1370.4db00113.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-ee0dc288.3e0920b6.js",
+      "path": "js/chunk-ee0dc288.3e0920b6.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/js/chunk-vendors.4acac32e.js",
+      "path": "js/chunk-vendors.4acac32e.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/hammerjs/2.0.8/hammer.min.js",
+      "path": "lib/hammerjs/2.0.8/hammer.min.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/mockjs/1.0.1-beta3/mock.min.js",
+      "path": "lib/mockjs/1.0.1-beta3/mock.min.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/moment/2.24.0/moment.min.js",
+      "path": "lib/moment/2.24.0/moment.min.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/vue-router/3.1.3/vue-router.min.js",
+      "path": "lib/vue-router/3.1.3/vue-router.min.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/vue/2.6.10/vue.min.js",
+      "path": "lib/vue/2.6.10/vue.min.js",
+      "mimeType": "application/javascript"
+    },
+    {
+      "packageId": "main",
+      "version": 1,
+      "remoteUrl": "http://122.51.132.117/lib/vuex/3.1.1/vuex.min.js",
+      "path": "lib/vuex/3.1.1/vuex.min.js",
+      "mimeType": "application/javascript"
+    }
+  ]
+}
