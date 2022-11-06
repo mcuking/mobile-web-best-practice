@@ -12,7 +12,7 @@
 
 | 体验平台 | 二维码                                                                    | 链接                                            | 备注             |
 | -------- | ------------------------------------------------------------------------- | ----------------------------------------------- | ---------------- |
-| Web      | <img src="https://i.loli.net/2020/11/08/IbAfiwedsGRl3hF.png"  width=140/> | [点击体验](http://122.51.132.117)            |                  |
+| Web      | <img src="https://s2.loli.net/2022/11/05/eP7OrpLGxujk5on.png"  width=140/> | [点击体验](https://mcuking.github.io/mobile-web-best-practice)            |                  |
 | Android  | <img src="https://i.loli.net/2020/02/29/wEqfsCRKnI2XP7V.png" width=140/>  | [点击体验](https://www.pgyer.com/mwbpcontainer) | 安装密码：123456 |
 
 ## 目录
@@ -535,8 +535,8 @@ location / {
     {
       "packageId": "mwbp",
       "version": 1,
-      "remoteUrl": "http://122.51.132.117/js/app.67073d65.js",
-      "path": "js/app.67073d65.js",
+      "remoteUrl": "https://mcuking.github.io/mobile-web-best-practice/js/chunk-146ee159.46b29746.js",
+      "path": "js/chunk-146ee159.46b29746.js",
       "mimeType": "application/javascript"
     },
     ...
