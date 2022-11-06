@@ -47,7 +47,7 @@ module.exports = {
             packageNameKey: 'packageId',
             packageNameValue: 'main',
             version: 1,
-            baseUrl: 'http://122.51.132.117/',
+            baseUrl: 'https://mcuking.github.io/mobile-web-best-practice/',
             fileTypes: ['js', 'css', 'png']
           })
         );
