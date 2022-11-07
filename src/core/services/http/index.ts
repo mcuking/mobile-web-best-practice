@@ -77,7 +77,9 @@ export default async function<T = any>(
 
     return data;
   } catch (err) {
-    errorReport(url!, err, requestOptions);
+    if (err instanceof Error || typeof err === 'string') {
+      errorReport(url!, err, requestOptions);
+    }
     throw err;
   }
 }
