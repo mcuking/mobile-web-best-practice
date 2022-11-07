@@ -20,7 +20,7 @@
     "lodash": "^4.17.15",
     "mem": "^5.1.1",
     "mockjs": "^1.0.1-beta3",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "vant": "^2.1.2",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
