@@ -11,7 +11,7 @@
     "@sentry/browser": "^5.6.3",
     "@sentry/integrations": "^5.6.1",
     "async-validator": "^3.0.4",
-    "axios": "^0.19.0",
+    "axios": "^0.21.2",
     "compare-versions": "^3.6.0",
     "core-js": "^2.6.5",
     "dsbridge": "^3.1.4",
